@@ -1,4 +1,8 @@
 services:
+  frontend:
+    image: frontend-image
+    ports:
+      - "3000:80"
   db:
     image: postgres
     environment:
