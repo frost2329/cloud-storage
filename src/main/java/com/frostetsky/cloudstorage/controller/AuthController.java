@@ -1,9 +1,6 @@
 package com.frostetsky.cloudstorage.controller;
 
-import com.frostetsky.cloudstorage.dto.CreateUserDto;
-import com.frostetsky.cloudstorage.dto.CreateUserResponse;
-import com.frostetsky.cloudstorage.dto.ErrorResponse;
-import com.frostetsky.cloudstorage.dto.LoginUserDto;
+import com.frostetsky.cloudstorage.dto.*;
 import com.frostetsky.cloudstorage.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +25,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
 
     @PostMapping("/sign-up")
-    public ResponseEntity registration(@RequestBody CreateUserDto dto,
+    public ResponseEntity registration(@RequestBody CreateUserRequest dto,
                                        HttpServletRequest request) {
         try {
             CreateUserResponse createUserResponse = userService.createUser(dto);
@@ -43,14 +40,14 @@ public class AuthController {
     }
 
     @PostMapping("/sign-in")
-    public ResponseEntity login(@RequestBody LoginUserDto dto,
+    public ResponseEntity login(@RequestBody LoginUserRequest dto,
                                 HttpServletRequest request) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(dto.username(), dto.password()));
             SecurityContextHolder.getContext().setAuthentication(authentication);
             request.getSession(true);
-            return ResponseEntity.status(HttpStatus.OK).body(new CreateUserResponse(dto.username()));
+            return ResponseEntity.status(HttpStatus.OK).body(new LoginUserResponse(dto.username()));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse(e.getMessage()));
         }

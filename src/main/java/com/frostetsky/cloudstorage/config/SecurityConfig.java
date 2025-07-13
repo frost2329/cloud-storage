@@ -39,8 +39,7 @@ public class SecurityConfig {
                         .logoutUrl("/api/auth/sign-out")
                         .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.NO_CONTENT))
                         .deleteCookies("JSESSIONID")
-                        .invalidateHttpSession(true)
-                )
+                        .invalidateHttpSession(true))
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .build();
