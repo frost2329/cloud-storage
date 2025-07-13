@@ -1,6 +1,6 @@
 package com.frostetsky.cloudstorage.service;
 
-import com.frostetsky.cloudstorage.dto.CreateUserDto;
+import com.frostetsky.cloudstorage.dto.CreateUserRequest;
 import com.frostetsky.cloudstorage.dto.CreateUserResponse;
 import com.frostetsky.cloudstorage.entity.User;
 import com.frostetsky.cloudstorage.repository.UserRepository;
@@ -21,7 +21,7 @@ public class UserService implements UserDetailsService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public CreateUserResponse createUser(CreateUserDto dto) {
+    public CreateUserResponse createUser(CreateUserRequest dto) {
         User user = userRepository.save(User.builder()
                 .username(dto.username())
                 .password(passwordEncoder.encode(dto.password()))
