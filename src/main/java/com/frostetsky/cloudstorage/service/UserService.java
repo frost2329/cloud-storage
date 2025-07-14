@@ -3,8 +3,11 @@ package com.frostetsky.cloudstorage.service;
 import com.frostetsky.cloudstorage.dto.CreateUserRequest;
 import com.frostetsky.cloudstorage.dto.CreateUserResponse;
 import com.frostetsky.cloudstorage.entity.User;
+import com.frostetsky.cloudstorage.excepiton.UserAlreadyExistException;
 import com.frostetsky.cloudstorage.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -22,11 +25,15 @@ public class UserService implements UserDetailsService {
 
     @Transactional
     public CreateUserResponse createUser(CreateUserRequest dto) {
-        User user = userRepository.save(User.builder()
-                .username(dto.username())
-                .password(passwordEncoder.encode(dto.password()))
-                .build());
-        return new CreateUserResponse(user.getUsername());
+        try {
+            User user = userRepository.save(User.builder()
+                    .username(dto.username())
+                    .password(passwordEncoder.encode(dto.password()))
+                    .build());
+            return new CreateUserResponse(user.getUsername());
+        } catch (DataIntegrityViolationException e) {
+            throw new UserAlreadyExistException(e);
+        }
     }
 
     @Override
