@@ -1,8 +1,10 @@
 package com.frostetsky.cloudstorage.controller;
 
 import com.frostetsky.cloudstorage.dto.*;
+import com.frostetsky.cloudstorage.excepiton.UserAlreadyExistException;
 import com.frostetsky.cloudstorage.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,7 +12,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,31 +29,35 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
 
     @PostMapping("/sign-up")
-    public ResponseEntity registration(@RequestBody CreateUserRequest dto,
+    public ResponseEntity registration(@RequestBody @Validated CreateUserRequest dto,
                                        HttpServletRequest request) {
-        try {
-            CreateUserResponse createUserResponse = userService.createUser(dto);
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(dto.username(), dto.password()));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            request.getSession(true);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createUserResponse);
-        } catch (BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse(e.getMessage()));
-        }
+        CreateUserResponse createUserResponse = userService.createUser(dto);
+        Authentication auth = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(dto.username(), dto.password()));
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(auth);
+        SecurityContextHolder.setContext(context);
+
+        HttpSession session = request.getSession(true);
+        session.setAttribute("SPRING_SECURITY_CONTEXT", context);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createUserResponse);
     }
 
     @PostMapping("/sign-in")
-    public ResponseEntity login(@RequestBody LoginUserRequest dto,
+    public ResponseEntity login(@RequestBody @Validated LoginUserRequest dto,
                                 HttpServletRequest request) {
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(dto.username(), dto.password()));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            request.getSession(true);
-            return ResponseEntity.status(HttpStatus.OK).body(new LoginUserResponse(dto.username()));
-        } catch (BadCredentialsException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse(e.getMessage()));
-        }
+        Authentication auth = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(dto.username(), dto.password()));
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(auth);
+        SecurityContextHolder.setContext(context);
+
+        HttpSession session = request.getSession(true);
+        session.setAttribute("SPRING_SECURITY_CONTEXT", context);
+
+        return ResponseEntity.status(HttpStatus.OK).body(new LoginUserResponse(dto.username()));
+
     }
 }

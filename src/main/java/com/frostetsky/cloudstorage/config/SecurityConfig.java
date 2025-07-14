@@ -29,11 +29,11 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/sign-in").permitAll()
-                        .requestMatchers("/api/auth/sign-up").permitAll()
+                        .requestMatchers("/api/auth/sign-in", "/api/auth/sign-up").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.ALWAYS))
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        .sessionFixation().migrateSession())
                 .formLogin(form -> form.disable())
                 .logout(logout -> logout
                         .logoutUrl("/api/auth/sign-out")
@@ -41,7 +41,11 @@ public class SecurityConfig {
                         .deleteCookies("JSESSIONID")
                         .invalidateHttpSession(true))
                 .exceptionHandling(exceptions -> exceptions
-                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            request.getSession().invalidate();
+                            response.setHeader("Set-Cookie", "");
+                            response.sendError(HttpStatus.UNAUTHORIZED.value(), "Unauthorized");
+                        }))
                 .build();
     }
 
