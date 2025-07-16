@@ -1,3 +1,9 @@
+volumes:
+  db_data:
+    driver: local
+  minio-data:
+    driver: local
+
 services:
   frontend:
     image: frontend-image
@@ -6,13 +12,25 @@ services:
   db:
     image: postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: pass
-      POSTGRES_DB: storage
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
       - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
 
-volumes:
-  postgres_data:
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY}
+    command: server ~/minio --console-address :9090
+    ports:
+      - '9090:9090'
+      - '9000:9000'
+    volumes:
+      - minio-data:/minio
+
+

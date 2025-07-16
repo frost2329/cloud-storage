@@ -6,7 +6,6 @@ import com.frostetsky.cloudstorage.entity.User;
 import com.frostetsky.cloudstorage.excepiton.UserAlreadyExistException;
 import com.frostetsky.cloudstorage.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -22,6 +21,12 @@ import java.util.Collections;
 public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    public Long getUserIdByUsername(String username) {
+        return userRepository.getUserByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь с username %s не найден".formatted(username)))
+                .getId();
+    }
 
     @Transactional
     public CreateUserResponse createUser(CreateUserRequest dto) {
