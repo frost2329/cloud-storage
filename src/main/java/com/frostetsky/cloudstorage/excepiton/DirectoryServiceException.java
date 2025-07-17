@@ -2,24 +2,24 @@ package com.frostetsky.cloudstorage.excepiton;
 
 import org.springframework.http.HttpStatus;
 
-public class FileServiceException extends BaseException {
+public class DirectoryServiceException extends BaseException {
 
     private static final int STATUS_CODE = HttpStatus.INTERNAL_SERVER_ERROR.value();
     private static final String MESSAGE = "Возникла непредвиденная ошибка при работе с файлами";
 
-    public FileServiceException() {
+    public DirectoryServiceException() {
         this(null, null);
     }
 
-    public FileServiceException(String message) {
+    public DirectoryServiceException(String message) {
         this(message, null);
     }
 
-    public FileServiceException(Exception e) {
+    public DirectoryServiceException(Exception e) {
         this(null, e);
     }
 
-    public FileServiceException(String message, Exception e) {
+    public DirectoryServiceException(String message, Exception e) {
         super(STATUS_CODE, message != null ? message : MESSAGE, e);
     }
 }
