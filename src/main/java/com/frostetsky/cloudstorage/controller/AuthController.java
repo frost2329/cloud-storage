@@ -1,7 +1,7 @@
 package com.frostetsky.cloudstorage.controller;
 
 import com.frostetsky.cloudstorage.dto.*;
-import com.frostetsky.cloudstorage.excepiton.UserAlreadyExistException;
+import com.frostetsky.cloudstorage.service.DirectoryService;
 import com.frostetsky.cloudstorage.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -27,11 +26,15 @@ public class AuthController {
 
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
+    private final DirectoryService directoryService;
 
     @PostMapping("/sign-up")
     public ResponseEntity registration(@RequestBody @Validated CreateUserRequest dto,
                                        HttpServletRequest request) {
+
         CreateUserResponse createUserResponse = userService.createUser(dto);
+        directoryService.createBaseDirectory(dto.username());
+
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(dto.username(), dto.password()));
 

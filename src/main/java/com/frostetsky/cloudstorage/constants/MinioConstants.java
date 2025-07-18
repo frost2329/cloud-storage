@@ -1,4 +1,4 @@
-package com.frostetsky.cloudstorage.service.constants;
+package com.frostetsky.cloudstorage.constants;
 
 public class MinioConstants {
 
