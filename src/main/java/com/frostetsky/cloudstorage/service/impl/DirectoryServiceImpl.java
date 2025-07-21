@@ -47,7 +47,7 @@ public class DirectoryServiceImpl implements DirectoryService {
                 userService.getUserIdByUsername(username));
         String fullPath = userBasePath + path;
 
-        if (!checkExistDirectory(fullPath)) {
+        if (!checkExistResource(fullPath)) {
             throw new ResourceNotFoundException("Папка не существует");
         }
 
@@ -80,7 +80,7 @@ public class DirectoryServiceImpl implements DirectoryService {
         Long userId = userService.getUserIdByUsername(username);
         String path = MinioConstants.USER_BASE_PATH_PATTERN.formatted(userId);
         try {
-            createEmptyObject(path);
+            createEmptyDirectory(path);
         } catch (Exception e) {
             throw new DirectoryServiceException("Произошла ошибка при создании папки", e);
         }
@@ -94,16 +94,16 @@ public class DirectoryServiceImpl implements DirectoryService {
                 .formatted(userService.getUserIdByUsername(username));
         String fullPath = userBasePath + path;
 
-        if (!checkExistDirectory(ResourceUtil.getParentDirectoryPath(fullPath))) {
+        if (!checkExistResource(ResourceUtil.getParentDirectoryPath(fullPath))) {
             throw new ResourceNotFoundException("Родительская папка не существует");
         }
 
-        if (checkExistDirectory(fullPath)) {
+        if (checkExistResource(fullPath)) {
             throw new ResourceAlreadyExistException("Папка уже существует");
         }
 
         try {
-            ObjectWriteResponse response = createEmptyObject(fullPath);
+            ObjectWriteResponse response = createEmptyDirectory(fullPath);
             String resourceName = response.object();
             return new ResourceDto(
                     ResourceUtil.getParentDirectoryPath(resourceName),
@@ -115,8 +115,9 @@ public class DirectoryServiceImpl implements DirectoryService {
         }
     }
 
+
     @SneakyThrows
-    private ObjectWriteResponse createEmptyObject(String path) {
+    public ObjectWriteResponse createEmptyDirectory(String path) {
         return minioClient.putObject(PutObjectArgs.builder()
                 .bucket(BUCKET_NAME)
                 .object(path)
@@ -125,7 +126,7 @@ public class DirectoryServiceImpl implements DirectoryService {
     }
 
     @SneakyThrows
-    private boolean checkExistDirectory(String path) {
+    public boolean checkExistResource(String path) {
         try {
             minioClient.statObject(StatObjectArgs.builder()
                     .bucket(BUCKET_NAME)

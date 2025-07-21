@@ -1,6 +1,7 @@
 package com.frostetsky.cloudstorage.service;
 
 import com.frostetsky.cloudstorage.dto.ResourceDto;
+import io.minio.ObjectWriteResponse;
 
 import java.util.List;
 
@@ -11,4 +12,8 @@ public interface DirectoryService {
     void createBaseDirectory(String username);
 
     ResourceDto createDirectory(String username, String path);
+
+    ObjectWriteResponse createEmptyDirectory(String path);
+
+    boolean checkExistResource(String path);
 }
