@@ -21,12 +21,14 @@ public class ResourceController {
     @PostMapping()
     public ResponseEntity upload(@RequestParam String path,
                                  @RequestParam MultipartFile[] object) {
-
-        Authentication authentication= SecurityContextHolder.getContext().getAuthentication();
-
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         List<ResourceDto> resources = resourceService.upload(authentication.getName(), path, object);
-
-
         return ResponseEntity.status(HttpStatus.CREATED).body(resources);
+    }
+
+    @DeleteMapping()
+    public ResponseEntity delete(@RequestParam String path) {
+        resourceService.delete(path);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

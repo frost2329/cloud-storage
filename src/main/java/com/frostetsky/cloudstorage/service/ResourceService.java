@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface ResourceService {
     List<ResourceDto> upload(String username, String path, MultipartFile[] file);
+
+    void delete(String path);
 }
