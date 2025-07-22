@@ -17,8 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,14 +35,12 @@ public class ResourceServiceImpl implements ResourceService {
             String basePath = MinioPathUtil.buildBasePath(userService.getUserIdByUsername(username));
             List<ResourceDto> resources = new ArrayList<>();
             for (MultipartFile file : object) {
-                Path fullPath = Paths.get(basePath, path, file.getOriginalFilename());
-                if (s3Service.checkExistObject(MinioPathUtil.convertPathToMinioFormat(fullPath.toString()))) {
+                String dirPath = basePath + path + file.getOriginalFilename();
+                if (s3Service.checkExistObject(dirPath)) {
                     throw new ResourceAlreadyExistException("Файл уже существует");
                 }
-                createParentDirectories(fullPath);
-                ObjectWriteResponse response = s3Service.putObject(
-                        MinioPathUtil.convertPathToMinioFormat(fullPath.toString()),
-                        file);
+                createParentDirectories(dirPath);
+                ObjectWriteResponse response = s3Service.putObject(dirPath, file);
                 resources.add(resourceMapper.toDto(response, file.getSize()));
             }
             return resources;
@@ -56,13 +52,12 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
 
-    private void createParentDirectories(Path originalFilename) {
-        List<String> parentDirectories = MinioPathUtil.getParentDirectories(originalFilename);
-        for (String dir : parentDirectories) {
-            String dirPath = MinioPathUtil.convertPathToMinioFormat(dir);
-            if (!s3Service.checkExistObject(dirPath)) {
+    private void createParentDirectories(String dirPath) {
+        List<String> parentDirectories = MinioPathUtil.getParentDirectories(dirPath);
+        for (String parentDirPath : parentDirectories) {
+            if (!s3Service.checkExistObject(parentDirPath)) {
                 try {
-                    s3Service.createEmptyDir(dirPath);
+                    s3Service.createEmptyDir(parentDirPath);
                 } catch (Exception e) {
                     throw new ResourceServiceException("Непредвиденная ошибка создании родительской папки");
                 }

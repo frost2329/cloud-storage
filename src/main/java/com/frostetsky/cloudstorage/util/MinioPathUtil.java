@@ -5,6 +5,7 @@ import com.frostetsky.cloudstorage.dto.ResourceType;
 import org.apache.commons.lang3.StringUtils;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -29,15 +30,15 @@ public class MinioPathUtil {
                 : ResourceType.FILE.name();
     }
 
-    public static List<String> getParentDirectories(Path filePath) {
-        Path current = filePath.getParent();
-        List<String> parents = new ArrayList<>();
-        while (current != null) {
-            parents.add(current + (current.toString().endsWith("\\") ? "" : "\\"));
-            current = current.getParent();
+    public static List<String> getParentDirectories(String dirPath) {
+        Path currentPath = Paths.get(dirPath).getParent();
+        List<String> parentsPaths = new ArrayList<>();
+        while (currentPath != null) {
+            parentsPaths.add(convertPathToMinioFormat(currentPath.toString()) + "/");
+            currentPath = currentPath.getParent();
         }
-        Collections.reverse(parents);
-        return parents;
+        Collections.reverse(parentsPaths);
+        return parentsPaths;
     }
 
     public static String convertPathToMinioFormat(String path) {

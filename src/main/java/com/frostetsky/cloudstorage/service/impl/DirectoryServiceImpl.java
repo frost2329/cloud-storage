@@ -15,8 +15,6 @@ import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,19 +31,17 @@ public class DirectoryServiceImpl implements DirectoryService {
         if (path == null) {
             throw new InvalidPathException("Не передан path");
         }
-        String basePath = MinioPathUtil.buildBasePath(userService.getUserIdByUsername(username));
-        Path fullPath = Paths.get(basePath, path);
-        String fullPathMinio = MinioPathUtil.convertPathToMinioFormat(fullPath.toString()) + "/";
-        if (!s3Service.checkExistObject(fullPathMinio)) {
+        String fullPath = MinioPathUtil.buildBasePath(userService.getUserIdByUsername(username)) + path;
+        if (!s3Service.checkExistObject(fullPath)) {
             throw new ResourceNotFoundException("Папка не существует");
         }
         List<ResourceDto> files = new ArrayList<>();
         try {
-            var results = s3Service.getObjectsInDirectory(fullPathMinio, false);
+            var results = s3Service.getObjectsInDirectory(fullPath, false);
             for (var result : results) {
                 try {
                     Item item = result.get();
-                    if (fullPathMinio.equals(item.objectName())) {
+                    if (fullPath.equals(item.objectName())) {
                         continue;
                     }
                     files.add(resourceMapper.toDto(item));
@@ -63,16 +59,15 @@ public class DirectoryServiceImpl implements DirectoryService {
         if (path == null || path.isEmpty()) {
             throw new InvalidPathException("Не передан path");
         }
-        Path fullPath = Paths.get(MinioPathUtil.buildBasePath(userService.getUserIdByUsername(username)), path);
-        if (!s3Service.checkExistObject(MinioPathUtil.convertPathToMinioFormat(fullPath.getParent().toString()) + "/")) {
+        String fullPath = MinioPathUtil.buildBasePath(userService.getUserIdByUsername(username)) + path;
+        if (!s3Service.checkExistObject(MinioPathUtil.getParentDirectoryPath(fullPath))) {
             throw new ResourceNotFoundException("Родительская папка не существует");
         }
-        if (s3Service.checkExistObject(MinioPathUtil.convertPathToMinioFormat(fullPath.toString()) + "/")) {
+        if (s3Service.checkExistObject(fullPath)) {
             throw new ResourceAlreadyExistException("Папка уже существует");
         }
         try {
-            ObjectWriteResponse response = s3Service.createEmptyDir(
-                    MinioPathUtil.convertPathToMinioFormat(fullPath.toString()) + "/");
+            ObjectWriteResponse response = s3Service.createEmptyDir(fullPath);
             return resourceMapper.toDto(response, null);
         } catch (Exception e) {
             throw new DirectoryServiceException("Произошла ошибка при создании папки", e);

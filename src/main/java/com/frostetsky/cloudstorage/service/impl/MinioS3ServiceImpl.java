@@ -2,7 +2,6 @@ package com.frostetsky.cloudstorage.service.impl;
 
 import com.frostetsky.cloudstorage.excepiton.MinioServiceException;
 import com.frostetsky.cloudstorage.service.S3Service;
-import com.frostetsky.cloudstorage.util.MinioPathUtil;
 import io.minio.*;
 import io.minio.errors.ErrorResponseException;
 import io.minio.messages.DeleteError;
@@ -55,7 +54,7 @@ public class MinioS3ServiceImpl implements S3Service {
         try {
             return minioClient.putObject(PutObjectArgs.builder()
                     .bucket(BUCKET_NAME)
-                    .object(MinioPathUtil.convertPathToMinioFormat(path))
+                    .object(path)
                     .stream(file.getInputStream(), file.getSize(), PART_SIZE)
                     .build());
         } catch (Exception e) {
