@@ -7,13 +7,12 @@ import com.frostetsky.cloudstorage.excepiton.DirectoryServiceException;
 import com.frostetsky.cloudstorage.excepiton.InvalidPathException;
 import com.frostetsky.cloudstorage.mapper.ResourceMapper;
 import com.frostetsky.cloudstorage.service.DirectoryService;
+import com.frostetsky.cloudstorage.service.S3Service;
 import com.frostetsky.cloudstorage.service.UserService;
 import com.frostetsky.cloudstorage.util.MinioPathUtil;
 import io.minio.*;
-import io.minio.errors.ErrorResponseException;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Path;
@@ -21,14 +20,13 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.frostetsky.cloudstorage.constants.MinioConstants.*;
 
 @Service
 @RequiredArgsConstructor
 public class DirectoryServiceImpl implements DirectoryService {
-    private final MinioClient minioClient;
     private final UserService userService;
     private final ResourceMapper resourceMapper;
+    private final S3Service s3Service;
 
 
     public List<ResourceDto> getDirectoryFiles(String username, String path) {
@@ -38,17 +36,13 @@ public class DirectoryServiceImpl implements DirectoryService {
         String basePath = MinioPathUtil.buildBasePath(userService.getUserIdByUsername(username));
         Path fullPath = Paths.get(basePath, path);
         String fullPathMinio = MinioPathUtil.convertPathToMinioFormat(fullPath.toString()) + "/";
-        if (!checkExistResource(fullPathMinio)) {
+        if (!s3Service.checkExistObject(fullPathMinio)) {
             throw new ResourceNotFoundException("Папка не существует");
         }
         List<ResourceDto> files = new ArrayList<>();
         try {
-            Iterable<Result<Item>> results = minioClient.listObjects(
-                    ListObjectsArgs.builder()
-                            .bucket(BUCKET_NAME)
-                            .prefix(fullPathMinio)
-                            .build());
-            for (Result<Item> result : results) {
+            var results = s3Service.getObjectsInDirectory(fullPathMinio, false);
+            for (var result : results) {
                 try {
                     Item item = result.get();
                     if (fullPathMinio.equals(item.objectName())) {
@@ -70,14 +64,14 @@ public class DirectoryServiceImpl implements DirectoryService {
             throw new InvalidPathException("Не передан path");
         }
         Path fullPath = Paths.get(MinioPathUtil.buildBasePath(userService.getUserIdByUsername(username)), path);
-        if (!checkExistResource(MinioPathUtil.convertPathToMinioFormat(fullPath.getParent().toString()) + "/")) {
+        if (!s3Service.checkExistObject(MinioPathUtil.convertPathToMinioFormat(fullPath.getParent().toString()) + "/")) {
             throw new ResourceNotFoundException("Родительская папка не существует");
         }
-        if (checkExistResource(MinioPathUtil.convertPathToMinioFormat(fullPath.toString()) + "/")) {
+        if (s3Service.checkExistObject(MinioPathUtil.convertPathToMinioFormat(fullPath.toString()) + "/")) {
             throw new ResourceAlreadyExistException("Папка уже существует");
         }
         try {
-            ObjectWriteResponse response = createEmptyDirectory(
+            ObjectWriteResponse response = s3Service.createEmptyDir(
                     MinioPathUtil.convertPathToMinioFormat(fullPath.toString()) + "/");
             return resourceMapper.toDto(response, null);
         } catch (Exception e) {
@@ -88,36 +82,9 @@ public class DirectoryServiceImpl implements DirectoryService {
     public void createBaseDirectory(String username) {
         String basePath = MinioPathUtil.buildBasePath(userService.getUserIdByUsername(username));
         try {
-            createEmptyDirectory(basePath);
+            s3Service.createEmptyDir(basePath);
         } catch (Exception e) {
             throw new DirectoryServiceException("Произошла ошибка при создании папки", e);
         }
     }
-
-    @SneakyThrows
-    public ObjectWriteResponse createEmptyDirectory(String path) {
-        return minioClient.putObject(PutObjectArgs.builder()
-                .bucket(BUCKET_NAME)
-                .object(path)
-                .stream(EMPTY_DIR_BYTEARRAY_STREAM, EMPTY_DIR_SIZE, PART_SIZE)
-                .build());
-    }
-
-    @SneakyThrows
-    public boolean checkExistResource(String path) {
-        try {
-            minioClient.statObject(StatObjectArgs.builder()
-                    .bucket(BUCKET_NAME)
-                    .object(path)
-                    .build());
-        } catch (ErrorResponseException e) {
-            if (e.errorResponse().code().equals("NoSuchKey")) {
-                return false;
-            }
-            throw e;
-        }
-        return true;
-    }
-
-
 }
