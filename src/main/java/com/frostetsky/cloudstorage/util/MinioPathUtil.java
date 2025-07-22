@@ -1,5 +1,6 @@
 package com.frostetsky.cloudstorage.util;
 
+import com.frostetsky.cloudstorage.constants.MinioConstants;
 import com.frostetsky.cloudstorage.dto.ResourceType;
 import org.apache.commons.lang3.StringUtils;
 
@@ -8,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ResourceUtil {
+public class MinioPathUtil {
 
     public static String getResourceName(String objectName) {
         String objectNameWithoutSlash = StringUtils.removeEnd(objectName, "/");
@@ -32,11 +33,19 @@ public class ResourceUtil {
         Path current = filePath.getParent();
         List<String> parents = new ArrayList<>();
         while (current != null) {
-            parents.add(current.toString() + (current.toString().endsWith("\\") ? "" : "\\"));
+            parents.add(current + (current.toString().endsWith("\\") ? "" : "\\"));
             current = current.getParent();
         }
         Collections.reverse(parents);
         return parents;
+    }
+
+    public static String convertPathToMinioFormat(String path) {
+        return path.replace("\\", "/");
+    }
+
+    public static String buildBasePath(Long userId) {
+        return MinioConstants.USER_BASE_PATH_PATTERN.formatted(userId);
     }
 
 }

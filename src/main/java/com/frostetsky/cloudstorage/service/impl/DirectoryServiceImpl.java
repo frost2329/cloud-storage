@@ -8,61 +8,50 @@ import com.frostetsky.cloudstorage.excepiton.InvalidPathException;
 import com.frostetsky.cloudstorage.mapper.ResourceMapper;
 import com.frostetsky.cloudstorage.service.DirectoryService;
 import com.frostetsky.cloudstorage.service.UserService;
-import com.frostetsky.cloudstorage.constants.MinioConstants;
-import com.frostetsky.cloudstorage.service.props.MinioProperties;
-import com.frostetsky.cloudstorage.util.ResourceUtil;
+import com.frostetsky.cloudstorage.util.MinioPathUtil;
 import io.minio.*;
 import io.minio.errors.ErrorResponseException;
 import io.minio.messages.Item;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayInputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.frostetsky.cloudstorage.constants.MinioConstants.*;
 
 @Service
 @RequiredArgsConstructor
 public class DirectoryServiceImpl implements DirectoryService {
     private final MinioClient minioClient;
-    private final MinioProperties minioProperties;
     private final UserService userService;
     private final ResourceMapper resourceMapper;
 
-    private String BUCKET_NAME;
-
-    @PostConstruct
-    public void init() {
-        this.BUCKET_NAME = minioProperties.getBucket();
-    }
 
     public List<ResourceDto> getDirectoryFiles(String username, String path) {
-        final String BUCKET_NAME = minioProperties.getBucket();
         if (path == null) {
             throw new InvalidPathException("Не передан path");
         }
-        String userBasePath = MinioConstants.USER_BASE_PATH_PATTERN.formatted(
-                userService.getUserIdByUsername(username));
-        String fullPath = userBasePath + path;
-
-        if (!checkExistResource(fullPath)) {
+        String basePath = MinioPathUtil.buildBasePath(userService.getUserIdByUsername(username));
+        Path fullPath = Paths.get(basePath, path);
+        String fullPathMinio = MinioPathUtil.convertPathToMinioFormat(fullPath.toString()) + "/";
+        if (!checkExistResource(fullPathMinio)) {
             throw new ResourceNotFoundException("Папка не существует");
         }
-
         List<ResourceDto> files = new ArrayList<>();
         try {
             Iterable<Result<Item>> results = minioClient.listObjects(
                     ListObjectsArgs.builder()
                             .bucket(BUCKET_NAME)
-                            .prefix(fullPath.endsWith("/") ? fullPath : fullPath + "/")
+                            .prefix(fullPathMinio)
                             .build());
-
             for (Result<Item> result : results) {
                 try {
                     Item item = result.get();
-                    if (fullPath.equals(item.objectName())) {
+                    if (fullPathMinio.equals(item.objectName())) {
                         continue;
                     }
                     files.add(resourceMapper.toDto(item));
@@ -76,52 +65,41 @@ public class DirectoryServiceImpl implements DirectoryService {
         }
     }
 
-    public void createBaseDirectory(String username) {
-        Long userId = userService.getUserIdByUsername(username);
-        String path = MinioConstants.USER_BASE_PATH_PATTERN.formatted(userId);
-        try {
-            createEmptyDirectory(path);
-        } catch (Exception e) {
-            throw new DirectoryServiceException("Произошла ошибка при создании папки", e);
-        }
-    }
-
     public ResourceDto createDirectory(String username, String path) {
         if (path == null || path.isEmpty()) {
             throw new InvalidPathException("Не передан path");
         }
-        String userBasePath = MinioConstants.USER_BASE_PATH_PATTERN
-                .formatted(userService.getUserIdByUsername(username));
-        String fullPath = userBasePath + path;
-
-        if (!checkExistResource(ResourceUtil.getParentDirectoryPath(fullPath))) {
+        Path fullPath = Paths.get(MinioPathUtil.buildBasePath(userService.getUserIdByUsername(username)), path);
+        if (!checkExistResource(MinioPathUtil.convertPathToMinioFormat(fullPath.getParent().toString()) + "/")) {
             throw new ResourceNotFoundException("Родительская папка не существует");
         }
-
-        if (checkExistResource(fullPath)) {
+        if (checkExistResource(MinioPathUtil.convertPathToMinioFormat(fullPath.toString()) + "/")) {
             throw new ResourceAlreadyExistException("Папка уже существует");
         }
-
         try {
-            ObjectWriteResponse response = createEmptyDirectory(fullPath);
-            String resourceName = response.object();
-            return new ResourceDto(
-                    ResourceUtil.getParentDirectoryPath(resourceName),
-                    ResourceUtil.getResourceName(resourceName),
-                    null,
-                    ResourceUtil.getResourceType(resourceName));
+            ObjectWriteResponse response = createEmptyDirectory(
+                    MinioPathUtil.convertPathToMinioFormat(fullPath.toString()) + "/");
+            return resourceMapper.toDto(response, null);
         } catch (Exception e) {
             throw new DirectoryServiceException("Произошла ошибка при создании папки", e);
         }
     }
 
+    public void createBaseDirectory(String username) {
+        String basePath = MinioPathUtil.buildBasePath(userService.getUserIdByUsername(username));
+        try {
+            createEmptyDirectory(basePath);
+        } catch (Exception e) {
+            throw new DirectoryServiceException("Произошла ошибка при создании папки", e);
+        }
+    }
 
     @SneakyThrows
     public ObjectWriteResponse createEmptyDirectory(String path) {
         return minioClient.putObject(PutObjectArgs.builder()
                 .bucket(BUCKET_NAME)
                 .object(path)
-                .stream(new ByteArrayInputStream(new byte[0]), 0, -1)
+                .stream(EMPTY_DIR_BYTEARRAY_STREAM, EMPTY_DIR_SIZE, PART_SIZE)
                 .build());
     }
 

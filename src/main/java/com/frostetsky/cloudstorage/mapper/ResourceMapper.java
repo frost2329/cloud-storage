@@ -2,7 +2,8 @@ package com.frostetsky.cloudstorage.mapper;
 
 import com.frostetsky.cloudstorage.dto.ResourceDto;
 
-import com.frostetsky.cloudstorage.util.ResourceUtil;
+import com.frostetsky.cloudstorage.util.MinioPathUtil;
+import io.minio.ObjectWriteResponse;
 import io.minio.messages.Item;
 import org.springframework.stereotype.Component;
 
@@ -11,9 +12,18 @@ public class ResourceMapper {
     public ResourceDto toDto(Item object) {
         String objectName = object.objectName();
         return new ResourceDto(
-                ResourceUtil.getParentDirectoryPath(objectName),
-                ResourceUtil.getResourceName(objectName),
+                MinioPathUtil.getParentDirectoryPath(objectName),
+                MinioPathUtil.getResourceName(objectName),
                 objectName.endsWith("/") ?  null :object.size(),
-                ResourceUtil.getResourceType(objectName));
+                MinioPathUtil.getResourceType(objectName));
+    }
+
+    public ResourceDto toDto(ObjectWriteResponse response, Long fileSize) {
+        String resourceName = response.object();
+        return new ResourceDto(
+                MinioPathUtil.getParentDirectoryPath(resourceName),
+                MinioPathUtil.getResourceName(resourceName),
+                fileSize,
+                MinioPathUtil.getResourceType(resourceName));
     }
 }

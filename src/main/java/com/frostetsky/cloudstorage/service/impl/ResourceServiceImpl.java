@@ -1,14 +1,13 @@
 package com.frostetsky.cloudstorage.service.impl;
 
-import com.frostetsky.cloudstorage.constants.MinioConstants;
 import com.frostetsky.cloudstorage.dto.ResourceDto;
 import com.frostetsky.cloudstorage.excepiton.ResourceAlreadyExistException;
 import com.frostetsky.cloudstorage.excepiton.ResourceServiceException;
+import com.frostetsky.cloudstorage.mapper.ResourceMapper;
 import com.frostetsky.cloudstorage.service.DirectoryService;
 import com.frostetsky.cloudstorage.service.ResourceService;
 import com.frostetsky.cloudstorage.service.UserService;
-import com.frostetsky.cloudstorage.service.props.MinioProperties;
-import com.frostetsky.cloudstorage.util.ResourceUtil;
+import com.frostetsky.cloudstorage.util.MinioPathUtil;
 import io.minio.MinioClient;
 import io.minio.ObjectWriteResponse;
 import io.minio.PutObjectArgs;
@@ -21,50 +20,55 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.frostetsky.cloudstorage.constants.MinioConstants.*;
 
 @Service
 @RequiredArgsConstructor
 public class ResourceServiceImpl implements ResourceService {
+
     private final MinioClient minioClient;
-    private final MinioProperties minioProperties;
     private final UserService userService;
     private final DirectoryService directoryService;
+    private final ResourceMapper resourceMapper;
 
     @Override
     public List<ResourceDto> upload(String username, String path, MultipartFile[] object) {
-        String userBasePath = MinioConstants.USER_BASE_PATH_PATTERN.formatted(userService.getUserIdByUsername(username));
-        List<ResourceDto> resources = new ArrayList<>();
-        for (MultipartFile file : object) {
-            Path fullPath = Paths.get(userBasePath, path, file.getOriginalFilename());
-            if (directoryService.checkExistResource(fullPath.toString().replace("\\", "/"))) {
-                throw new ResourceAlreadyExistException("Файл уже существует");
-            }
-            try {
+        try {
+            String basePath = MinioPathUtil.buildBasePath(userService.getUserIdByUsername(username));
+            List<ResourceDto> resources = new ArrayList<>();
+            for (MultipartFile file : object) {
+                Path fullPath = Paths.get(basePath, path, file.getOriginalFilename());
+                if (directoryService.checkExistResource(MinioPathUtil.convertPathToMinioFormat(fullPath.toString()))) {
+                    throw new ResourceAlreadyExistException("Файл уже существует");
+                }
                 createParentDirectories(fullPath);
-                ObjectWriteResponse response = minioClient.putObject(PutObjectArgs.builder()
-                        .bucket(minioProperties.getBucket())
-                        .object(fullPath.toString().replace("\\", "/"))
-                        .stream(file.getInputStream(), file.getSize(), -1)
-                        .build());
-                String resourceName = response.object();
-                ResourceDto resourceDto = new ResourceDto(
-                        ResourceUtil.getParentDirectoryPath(resourceName),
-                        ResourceUtil.getResourceName(resourceName),
-                        file.getSize(),
-                        ResourceUtil.getResourceType(resourceName));
-                resources.add(resourceDto);
-
-            } catch (Exception e) {
-                throw new ResourceServiceException("Непредвиденная ошибка при загрузки файлов");
+                ObjectWriteResponse response = uploadToMinio(MinioPathUtil.convertPathToMinioFormat(fullPath.toString()), file);
+                resources.add(resourceMapper.toDto(response, file.getSize()));
             }
+            return resources;
+        } catch (ResourceAlreadyExistException | ResourceServiceException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResourceServiceException("Непредвиденная ошибка при загрузки файлов", e);
         }
-        return resources;
+    }
+
+    private ObjectWriteResponse uploadToMinio(String path, MultipartFile file) {
+        try {
+            return minioClient.putObject(PutObjectArgs.builder()
+                    .bucket(BUCKET_NAME)
+                    .object(MinioPathUtil.convertPathToMinioFormat(path))
+                    .stream(file.getInputStream(), file.getSize(), PART_SIZE)
+                    .build());
+        } catch (Exception e) {
+            throw new ResourceServiceException("Непредвиденная ошибка при загрузки файла", e);
+        }
     }
 
     private void createParentDirectories(Path originalFilename) {
-        List<String> parentDirectories = ResourceUtil.getParentDirectories(originalFilename);
+        List<String> parentDirectories = MinioPathUtil.getParentDirectories(originalFilename);
         for (String dir : parentDirectories) {
-            String dirPath = dir.replace("\\", "/");
+            String dirPath = MinioPathUtil.convertPathToMinioFormat(dir);
             if (!directoryService.checkExistResource(dirPath)) {
                 try {
                     directoryService.createEmptyDirectory(dirPath);
