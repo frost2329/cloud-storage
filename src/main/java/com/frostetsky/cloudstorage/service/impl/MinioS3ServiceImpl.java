@@ -1,6 +1,7 @@
 package com.frostetsky.cloudstorage.service.impl;
 
 import com.frostetsky.cloudstorage.excepiton.MinioServiceException;
+import com.frostetsky.cloudstorage.excepiton.ResourceNotFoundException;
 import com.frostetsky.cloudstorage.service.S3Service;
 import io.minio.*;
 import io.minio.errors.ErrorResponseException;
@@ -96,5 +97,20 @@ public class MinioS3ServiceImpl implements S3Service {
         }
     }
 
-
+    @Override
+    public StatObjectResponse getObjectInfo(String path) {
+        try {
+            return minioClient.statObject(StatObjectArgs.builder()
+                    .bucket(BUCKET_NAME)
+                    .object(path)
+                    .build());
+        } catch (ErrorResponseException e) {
+            if (e.errorResponse().code().equals("NoSuchKey")) {
+                throw new ResourceNotFoundException("Ресурс не найден", e);
+            }
+            throw new MinioServiceException("Произошла непредвиденная ошибка при получении информации о файле", e);
+        } catch (Exception e) {
+            throw new MinioServiceException("Произошла непредвиденная ошибка при получении информации о файле", e);
+        }
+    }
 }

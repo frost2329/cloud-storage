@@ -86,4 +86,19 @@ public class ResourceServiceImpl implements ResourceService {
             throw new ResourceServiceException("Непредвиденная ошибка при удалении файла", e);
         }
     }
+
+    @Override
+    public ResourceDto getResourceInfo(String path) {
+        if (path == null || path.isEmpty()) {
+            throw new InvalidPathException("Не передан path");
+        }
+        try {
+            StatObjectResponse info = s3Service.getObjectInfo(path);
+            return resourceMapper.toDto(info);
+        } catch (ResourceNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResourceServiceException("Непредвиденная ошибка при получении информации файла", e);
+        }
+    }
 }

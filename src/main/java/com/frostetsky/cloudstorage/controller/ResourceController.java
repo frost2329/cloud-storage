@@ -18,6 +18,12 @@ public class ResourceController {
 
     private final ResourceService resourceService;
 
+    @GetMapping()
+    public ResponseEntity getResourceInfo(@RequestParam String path) {
+        ResourceDto resource = resourceService.getResourceInfo(path);
+        return ResponseEntity.status(HttpStatus.OK).body(resource);
+    }
+
     @PostMapping()
     public ResponseEntity upload(@RequestParam String path,
                                  @RequestParam MultipartFile[] object) {

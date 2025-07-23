@@ -2,6 +2,7 @@ package com.frostetsky.cloudstorage.service;
 
 import io.minio.ObjectWriteResponse;
 import io.minio.Result;
+import io.minio.StatObjectResponse;
 import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,4 +20,6 @@ public interface S3Service {
     void deleteObjects(List<DeleteObject> objectsToDelete);
 
     boolean checkExistObject(String path);
+
+    StatObjectResponse getObjectInfo(String path);
 }

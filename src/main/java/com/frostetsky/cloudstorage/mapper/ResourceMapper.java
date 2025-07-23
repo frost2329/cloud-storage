@@ -4,6 +4,7 @@ import com.frostetsky.cloudstorage.dto.ResourceDto;
 
 import com.frostetsky.cloudstorage.util.MinioPathUtil;
 import io.minio.ObjectWriteResponse;
+import io.minio.StatObjectResponse;
 import io.minio.messages.Item;
 import org.springframework.stereotype.Component;
 
@@ -25,5 +26,14 @@ public class ResourceMapper {
                 MinioPathUtil.getResourceName(resourceName),
                 fileSize,
                 MinioPathUtil.getResourceType(resourceName));
+    }
+
+    public ResourceDto toDto(StatObjectResponse info) {
+        String object = info.object();
+        return new ResourceDto(
+                MinioPathUtil.getParentDirectoryPath(object),
+                MinioPathUtil.getResourceName(object),
+                info.size(),
+                MinioPathUtil.getResourceType(object));
     }
 }
