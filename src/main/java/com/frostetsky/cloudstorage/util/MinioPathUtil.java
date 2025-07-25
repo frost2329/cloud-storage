@@ -18,6 +18,14 @@ public class MinioPathUtil {
         return objectName.substring(lastSlashIndex + 1);
     }
 
+    public static String buildZipArchiveName(String objectName) {
+        String zipName = MinioPathUtil.getResourceName(objectName);
+        zipName = objectName.endsWith("/")
+                ? objectName.substring(0, objectName.length() - 1)
+                : objectName;
+        return  zipName + ".zip";
+    }
+
     public static String getParentDirectoryPath(String objectName) {
         String objectNameWithoutSlash = StringUtils.removeEnd(objectName, "/");
         int lastSlashIndex = objectNameWithoutSlash.lastIndexOf('/');

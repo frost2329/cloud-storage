@@ -120,7 +120,7 @@ public class ResourceServiceImpl implements ResourceService {
 
         if (MinioPathUtil.isDirectory(path)) {
             return new DownloadResultDto(
-                    MinioPathUtil.getResourceName(path) + ".zip",
+                    MinioPathUtil.buildZipArchiveName(path),
                     downloadDirectory(path));
         } else {
             return new DownloadResultDto(
@@ -130,18 +130,18 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     private StreamingResponseBody downloadFile(String path) {
-        try (InputStream stream = s3Service.downloadObject(path)) {
-            return outputStream -> {
+        InputStream stream = s3Service.downloadObject(path);
+        return outputStream -> {
+            try (stream) {
+                byte[] buffer = new byte[8192];
                 int bytesRead;
-                byte[] buffer = new byte[1024];
                 while ((bytesRead = stream.read(buffer)) != -1) {
                     outputStream.write(buffer, 0, bytesRead);
                 }
-            };
-        } catch (Exception e) {
-            throw new ResourceServiceException("Непредвиденная ошибка при загрузки файла", e);
-        }
-
+            } catch (Exception e) {
+                throw new ResourceServiceException("Ошибка при потоковой передаче файла", e);
+            }
+        };
     }
 
 
@@ -164,15 +164,13 @@ public class ResourceServiceImpl implements ResourceService {
             if (!folderPath.endsWith("/")) {
                 folderPath += "/";
             }
-            zipOut.putNextEntry(new ZipEntry(folderPath));
-            zipOut.closeEntry();
             for (String objectPath : objectsToDownload) {
                 if (MinioPathUtil.isDirectory(objectPath)) {
                     continue;
                 }
                 String fileName = objectPath.substring(folderPath.length());
                 zipOut.putNextEntry(new ZipEntry(fileName));
-                try (InputStream stream = s3Service.downloadObject(fileName)) {
+                try (InputStream stream = s3Service.downloadObject(objectPath)) {
                     int bytesRead;
                     byte[] buffer = new byte[8192];
                     while ((bytesRead = stream.read(buffer)) != -1) {

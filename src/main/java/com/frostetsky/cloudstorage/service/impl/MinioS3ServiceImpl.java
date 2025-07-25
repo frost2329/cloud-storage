@@ -107,7 +107,7 @@ public class MinioS3ServiceImpl implements S3Service {
                             .object(path)
                             .build());
         } catch (Exception e) {
-            throw new MinioServiceException("Произошла непредвиденная ошибка при получении информации о файле", e);
+            throw new MinioServiceException("Произошла ошибка при загрузки файла", e);
         }
     }
 
