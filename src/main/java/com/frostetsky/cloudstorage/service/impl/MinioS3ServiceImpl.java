@@ -13,6 +13,7 @@ import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.util.List;
 
 import static com.frostetsky.cloudstorage.constants.MinioConstants.*;
@@ -92,6 +93,19 @@ public class MinioS3ServiceImpl implements S3Service {
                 return false;
             }
             throw new MinioServiceException("Произошла непредвиденная ошибка при получении информации о файле", e);
+        } catch (Exception e) {
+            throw new MinioServiceException("Произошла непредвиденная ошибка при получении информации о файле", e);
+        }
+    }
+
+    @Override
+    public InputStream downloadObject(String path) {
+        try {
+            return minioClient.getObject(
+                    GetObjectArgs.builder()
+                            .bucket(BUCKET_NAME)
+                            .object(path)
+                            .build());
         } catch (Exception e) {
             throw new MinioServiceException("Произошла непредвиденная ошибка при получении информации о файле", e);
         }

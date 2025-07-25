@@ -1,5 +1,6 @@
 package com.frostetsky.cloudstorage.service;
 
+import com.frostetsky.cloudstorage.dto.DownloadResultDto;
 import com.frostetsky.cloudstorage.dto.ResourceDto;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -11,4 +12,6 @@ public interface ResourceService {
     void delete(String path);
 
     ResourceDto getResourceInfo(String path);
+
+    DownloadResultDto downloadResource(String path);
 }

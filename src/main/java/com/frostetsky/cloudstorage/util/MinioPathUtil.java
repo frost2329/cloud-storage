@@ -49,4 +49,7 @@ public class MinioPathUtil {
         return MinioConstants.USER_BASE_PATH_PATTERN.formatted(userId);
     }
 
+    public static boolean isDirectory(String path) {
+        return path.endsWith("/");
+    }
 }
