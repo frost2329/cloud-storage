@@ -24,5 +24,7 @@ public interface S3Service {
 
     InputStream downloadObject(String path);
 
+    ObjectWriteResponse copyObject(String pathFrom, String pathTo);
+
     StatObjectResponse getObjectInfo(String path);
 }

@@ -38,8 +38,8 @@ public class ResourceController {
     }
 
     @DeleteMapping()
-    public ResponseEntity delete(@RequestParam String path) {
-        resourceService.delete(path);
+    public ResponseEntity<Void> delete(@RequestParam String path) {
+        resourceService.deleteResource(path);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
@@ -50,5 +50,12 @@ public class ResourceController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + result.fileName() + "\"")
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(result.body());
+    }
+
+    @GetMapping("/move")
+    public ResponseEntity<ResourceDto> downloadResource(@RequestParam("from") String pathFrom,
+                                                        @RequestParam("to") String pathTo) {
+        ResourceDto result = resourceService.moveResource(pathFrom, pathTo);
+        return ResponseEntity.ok().body(result);
     }
 }

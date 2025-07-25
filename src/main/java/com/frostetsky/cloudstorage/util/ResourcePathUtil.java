@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class MinioPathUtil {
+public class ResourcePathUtil {
 
     public static String getResourceName(String objectName) {
         String objectNameWithoutSlash = StringUtils.removeEnd(objectName, "/");
@@ -19,7 +19,7 @@ public class MinioPathUtil {
     }
 
     public static String buildZipArchiveName(String objectName) {
-        String zipName = MinioPathUtil.getResourceName(objectName);
+        String zipName = ResourcePathUtil.getResourceName(objectName);
         zipName = objectName.endsWith("/")
                 ? objectName.substring(0, objectName.length() - 1)
                 : objectName;

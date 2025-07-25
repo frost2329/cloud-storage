@@ -9,9 +9,11 @@ import java.util.List;
 public interface ResourceService {
     List<ResourceDto> upload(String username, String path, MultipartFile[] file);
 
-    void delete(String path);
+    void deleteResource(String path);
 
     ResourceDto getResourceInfo(String path);
 
     DownloadResultDto downloadResource(String path);
+
+    ResourceDto moveResource(String pathFrom, String pathTo);
 }

@@ -10,7 +10,7 @@ import com.frostetsky.cloudstorage.mapper.ResourceMapper;
 import com.frostetsky.cloudstorage.service.ResourceService;
 import com.frostetsky.cloudstorage.service.S3Service;
 import com.frostetsky.cloudstorage.service.UserService;
-import com.frostetsky.cloudstorage.util.MinioPathUtil;
+import com.frostetsky.cloudstorage.util.ResourcePathUtil;
 import io.minio.*;
 import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
@@ -35,11 +35,12 @@ public class ResourceServiceImpl implements ResourceService {
     private final UserService userService;
     private final ResourceMapper resourceMapper;
     private final S3Service s3Service;
+    private final MinioS3ServiceImpl minioS3ServiceImpl;
 
     @Override
     public List<ResourceDto> upload(String username, String path, MultipartFile[] object) {
         try {
-            String basePath = MinioPathUtil.buildBasePath(userService.getUserIdByUsername(username));
+            String basePath = ResourcePathUtil.buildBasePath(userService.getUserIdByUsername(username));
             List<ResourceDto> resources = new ArrayList<>();
             for (MultipartFile file : object) {
                 String dirPath = basePath + path + file.getOriginalFilename();
@@ -48,7 +49,7 @@ public class ResourceServiceImpl implements ResourceService {
                 }
                 createParentDirectories(dirPath);
                 ObjectWriteResponse response = s3Service.putObject(dirPath, file);
-                resources.add(resourceMapper.toDto(response, file.getSize()));
+                resources.add(resourceMapper.toDto(response.object(), file.getSize()));
             }
             return resources;
         } catch (ResourceAlreadyExistException | ResourceServiceException e) {
@@ -60,7 +61,7 @@ public class ResourceServiceImpl implements ResourceService {
 
 
     private void createParentDirectories(String dirPath) {
-        List<String> parentDirectories = MinioPathUtil.getParentDirectories(dirPath);
+        List<String> parentDirectories = ResourcePathUtil.getParentDirectories(dirPath);
         for (String parentDirPath : parentDirectories) {
             if (!s3Service.checkExistObject(parentDirPath)) {
                 try {
@@ -73,7 +74,7 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public void delete(String path) {
+    public void deleteResource(String path) {
         if (path == null || path.isEmpty()) {
             throw new InvalidPathException("Не передан path");
         }
@@ -118,13 +119,13 @@ public class ResourceServiceImpl implements ResourceService {
             throw new ResourceNotFoundException("Ресурс не найден");
         }
 
-        if (MinioPathUtil.isDirectory(path)) {
+        if (ResourcePathUtil.isDirectory(path)) {
             return new DownloadResultDto(
-                    MinioPathUtil.buildZipArchiveName(path),
+                    ResourcePathUtil.buildZipArchiveName(path),
                     downloadDirectory(path));
         } else {
             return new DownloadResultDto(
-                    MinioPathUtil.getResourceName(path),
+                    ResourcePathUtil.getResourceName(path),
                     downloadFile(path));
         }
     }
@@ -165,7 +166,7 @@ public class ResourceServiceImpl implements ResourceService {
                 folderPath += "/";
             }
             for (String objectPath : objectsToDownload) {
-                if (MinioPathUtil.isDirectory(objectPath)) {
+                if (ResourcePathUtil.isDirectory(objectPath)) {
                     continue;
                 }
                 String fileName = objectPath.substring(folderPath.length());
@@ -180,6 +181,56 @@ public class ResourceServiceImpl implements ResourceService {
                 zipOut.closeEntry();
             }
             zipOut.finish();
+        }
+    }
+
+    @Override
+    public ResourceDto moveResource(String pathFrom, String pathTo) {
+        if (pathFrom == null || pathFrom.isEmpty()) {
+            throw new InvalidPathException("Не передан path");
+        }
+        if (!s3Service.checkExistObject(pathFrom)) {
+            throw new ResourceNotFoundException("Ресурс не найден");
+        }
+
+        if (s3Service.checkExistObject(pathTo)) {
+            throw new ResourceNotFoundException("Ресурс, лежащий по пути %s уже существует".formatted(pathTo));
+        }
+        if (ResourcePathUtil.isDirectory(pathTo)) {
+            return moveDirectory(pathFrom, pathTo);
+        } else {
+            return moveFile(pathFrom, pathTo);
+        }
+    }
+
+    private ResourceDto moveFile(String pathFrom, String pathTo) {
+        try {
+            StatObjectResponse info = s3Service.getObjectInfo(pathFrom);
+            minioS3ServiceImpl.copyObject(pathFrom, pathTo);
+            List<DeleteObject> deleteObjects = new ArrayList<>(List.of(new DeleteObject(pathFrom)));
+            s3Service.deleteObjects(deleteObjects);
+            return resourceMapper.toDto(pathTo,info.size());
+        } catch (Exception e) {
+            throw new ResourceServiceException("Непредвиденная ошибка при перемещении файла", e);
+        }
+    }
+
+    private ResourceDto moveDirectory(String pathFrom, String pathTo) {
+        try {
+            List<DeleteObject> objectsToDelete = new ArrayList<>();
+            Iterable<Result<Item>> results = s3Service.getObjectsInDirectory(pathFrom, true);
+            for (Result<Item> result : results) {
+                String objectPathFrom = result.get().objectName();
+                String objectPathTo = pathTo + objectPathFrom.substring(pathFrom.length());
+                minioS3ServiceImpl.copyObject(objectPathFrom, objectPathTo);
+                objectsToDelete.add(new DeleteObject(objectPathFrom));
+            }
+            if (!objectsToDelete.isEmpty()) {
+                s3Service.deleteObjects(objectsToDelete);
+            }
+            return resourceMapper.toDto(pathTo,null);
+        } catch (Exception e) {
+            throw new ResourceServiceException("Непредвиденная ошибка при перемещении папки", e);
         }
     }
 }

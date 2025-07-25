@@ -112,6 +112,23 @@ public class MinioS3ServiceImpl implements S3Service {
     }
 
     @Override
+    public ObjectWriteResponse copyObject(String pathFrom, String pathTo) {
+        try {
+            return minioClient.copyObject(
+                    CopyObjectArgs.builder()
+                            .bucket(BUCKET_NAME)
+                            .object(pathTo)
+                            .source(CopySource.builder()
+                                    .bucket(BUCKET_NAME)
+                                    .object(pathFrom)
+                                    .build())
+                            .build());
+        } catch (Exception e) {
+            throw new MinioServiceException("Произошла ошибка при загрузки файла", e);
+        }
+    }
+
+    @Override
     public StatObjectResponse getObjectInfo(String path) {
         try {
             return minioClient.statObject(StatObjectArgs.builder()

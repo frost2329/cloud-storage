@@ -9,7 +9,7 @@ import com.frostetsky.cloudstorage.mapper.ResourceMapper;
 import com.frostetsky.cloudstorage.service.DirectoryService;
 import com.frostetsky.cloudstorage.service.S3Service;
 import com.frostetsky.cloudstorage.service.UserService;
-import com.frostetsky.cloudstorage.util.MinioPathUtil;
+import com.frostetsky.cloudstorage.util.ResourcePathUtil;
 import io.minio.*;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +31,7 @@ public class DirectoryServiceImpl implements DirectoryService {
         if (path == null) {
             throw new InvalidPathException("Не передан path");
         }
-        String fullPath = MinioPathUtil.buildBasePath(userService.getUserIdByUsername(username)) + path;
+        String fullPath = ResourcePathUtil.buildBasePath(userService.getUserIdByUsername(username)) + path;
         if (!s3Service.checkExistObject(fullPath)) {
             throw new ResourceNotFoundException("Папка не существует");
         }
@@ -59,8 +59,8 @@ public class DirectoryServiceImpl implements DirectoryService {
         if (path == null || path.isEmpty()) {
             throw new InvalidPathException("Не передан path");
         }
-        String fullPath = MinioPathUtil.buildBasePath(userService.getUserIdByUsername(username)) + path;
-        if (!s3Service.checkExistObject(MinioPathUtil.getParentDirectoryPath(fullPath))) {
+        String fullPath = ResourcePathUtil.buildBasePath(userService.getUserIdByUsername(username)) + path;
+        if (!s3Service.checkExistObject(ResourcePathUtil.getParentDirectoryPath(fullPath))) {
             throw new ResourceNotFoundException("Родительская папка не существует");
         }
         if (s3Service.checkExistObject(fullPath)) {
@@ -68,14 +68,14 @@ public class DirectoryServiceImpl implements DirectoryService {
         }
         try {
             ObjectWriteResponse response = s3Service.createEmptyDir(fullPath);
-            return resourceMapper.toDto(response, null);
+            return resourceMapper.toDto(response.object(), null);
         } catch (Exception e) {
             throw new DirectoryServiceException("Произошла ошибка при создании папки", e);
         }
     }
 
     public void createBaseDirectory(String username) {
-        String basePath = MinioPathUtil.buildBasePath(userService.getUserIdByUsername(username));
+        String basePath = ResourcePathUtil.buildBasePath(userService.getUserIdByUsername(username));
         try {
             s3Service.createEmptyDir(basePath);
         } catch (Exception e) {
