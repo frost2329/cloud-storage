@@ -16,4 +16,6 @@ public interface ResourceService {
     DownloadResultDto downloadResource(String path);
 
     ResourceDto moveResource(String pathFrom, String pathTo);
+
+    List<ResourceDto> searchResources(String username, String query);
 }

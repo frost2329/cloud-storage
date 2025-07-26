@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.frostetsky.cloudstorage.constants.MinioConstants.*;
@@ -24,14 +25,19 @@ public class MinioS3ServiceImpl implements S3Service {
     private final MinioClient minioClient;
 
     @Override
-    public Iterable<Result<Item>> getObjectsInDirectory(String path, boolean recursive) {
+    public List<Item> getObjectsInDirectory(String path, boolean recursive) {
         try {
-            return minioClient.listObjects(
+            List<Item> resultItems = new ArrayList<>();
+            Iterable<Result<Item>> results =  minioClient.listObjects(
                     ListObjectsArgs.builder()
                             .bucket(BUCKET_NAME)
                             .prefix(path)
                             .recursive(recursive)
                             .build());
+            for (Result<Item> result : results) {
+                resultItems.add(result.get());
+            }
+            return resultItems;
         } catch (Exception e) {
             throw new MinioServiceException("Произошла непредвиденная ошибка получении файлов", e);
         }

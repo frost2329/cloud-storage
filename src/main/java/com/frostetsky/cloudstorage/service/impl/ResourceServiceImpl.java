@@ -2,7 +2,7 @@ package com.frostetsky.cloudstorage.service.impl;
 
 import com.frostetsky.cloudstorage.dto.DownloadResultDto;
 import com.frostetsky.cloudstorage.dto.ResourceDto;
-import com.frostetsky.cloudstorage.excepiton.InvalidPathException;
+import com.frostetsky.cloudstorage.excepiton.InvalidParamException;
 import com.frostetsky.cloudstorage.excepiton.ResourceAlreadyExistException;
 import com.frostetsky.cloudstorage.excepiton.ResourceNotFoundException;
 import com.frostetsky.cloudstorage.excepiton.ResourceServiceException;
@@ -76,17 +76,16 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public void deleteResource(String path) {
         if (path == null || path.isEmpty()) {
-            throw new InvalidPathException("Не передан path");
+            throw new InvalidParamException("Не передан path");
         }
         if (!s3Service.checkExistObject(path)) {
             throw new ResourceNotFoundException("Ресурс не найден");
         }
         try {
-            List<DeleteObject> objectsToDelete = new ArrayList<>();
-            var results = s3Service.getObjectsInDirectory(path, true);
-            for (Result<Item> result : results) {
-                objectsToDelete.add(new DeleteObject(result.get().objectName()));
-            }
+            List<DeleteObject> objectsToDelete = s3Service.getObjectsInDirectory(path, true)
+                    .stream()
+                    .map(item -> new DeleteObject(item.objectName()))
+                    .toList();
             if (!objectsToDelete.isEmpty()) {
                 s3Service.deleteObjects(objectsToDelete);
             }
@@ -98,7 +97,7 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public ResourceDto getResourceInfo(String path) {
         if (path == null || path.isEmpty()) {
-            throw new InvalidPathException("Не передан path");
+            throw new InvalidParamException("Не передан path");
         }
         try {
             StatObjectResponse info = s3Service.getObjectInfo(path);
@@ -113,7 +112,7 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public DownloadResultDto downloadResource(String path) {
         if (path == null || path.isEmpty()) {
-            throw new InvalidPathException("Не передан path");
+            throw new InvalidParamException("Не передан path");
         }
         if (!s3Service.checkExistObject(path)) {
             throw new ResourceNotFoundException("Ресурс не найден");
@@ -148,11 +147,10 @@ public class ResourceServiceImpl implements ResourceService {
 
     private StreamingResponseBody downloadDirectory(String folderPath) {
         try {
-            Iterable<Result<Item>> results = s3Service.getObjectsInDirectory(folderPath, true);
-            List<String> objectsToDownload = new ArrayList<>();
-            for (Result<Item> result : results) {
-                objectsToDownload.add(result.get().objectName());
-            }
+            List<Item> items = s3Service.getObjectsInDirectory(folderPath, true);
+            List<String> objectsToDownload = items.stream()
+                    .map(Item::objectName)
+                    .toList();
             return outputStream -> createZipArchive(folderPath, objectsToDownload, outputStream);
         } catch (Exception e) {
             throw new ResourceServiceException("Непредвиденная ошибка при загрузки папки", e);
@@ -187,7 +185,7 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public ResourceDto moveResource(String pathFrom, String pathTo) {
         if (pathFrom == null || pathFrom.isEmpty()) {
-            throw new InvalidPathException("Не передан path");
+            throw new InvalidParamException("Не передан path");
         }
         if (!s3Service.checkExistObject(pathFrom)) {
             throw new ResourceNotFoundException("Ресурс не найден");
@@ -207,8 +205,7 @@ public class ResourceServiceImpl implements ResourceService {
         try {
             StatObjectResponse info = s3Service.getObjectInfo(pathFrom);
             minioS3ServiceImpl.copyObject(pathFrom, pathTo);
-            List<DeleteObject> deleteObjects = new ArrayList<>(List.of(new DeleteObject(pathFrom)));
-            s3Service.deleteObjects(deleteObjects);
+            s3Service.deleteObjects(List.of(new DeleteObject(pathFrom)));
             return resourceMapper.toDto(pathTo,info.size());
         } catch (Exception e) {
             throw new ResourceServiceException("Непредвиденная ошибка при перемещении файла", e);
@@ -218,9 +215,9 @@ public class ResourceServiceImpl implements ResourceService {
     private ResourceDto moveDirectory(String pathFrom, String pathTo) {
         try {
             List<DeleteObject> objectsToDelete = new ArrayList<>();
-            Iterable<Result<Item>> results = s3Service.getObjectsInDirectory(pathFrom, true);
-            for (Result<Item> result : results) {
-                String objectPathFrom = result.get().objectName();
+            List<Item> items = s3Service.getObjectsInDirectory(pathFrom, true);
+            for (Item item : items) {
+                String objectPathFrom = item.objectName();
                 String objectPathTo = pathTo + objectPathFrom.substring(pathFrom.length());
                 minioS3ServiceImpl.copyObject(objectPathFrom, objectPathTo);
                 objectsToDelete.add(new DeleteObject(objectPathFrom));
@@ -231,6 +228,24 @@ public class ResourceServiceImpl implements ResourceService {
             return resourceMapper.toDto(pathTo,null);
         } catch (Exception e) {
             throw new ResourceServiceException("Непредвиденная ошибка при перемещении папки", e);
+        }
+    }
+
+    @Override
+    public List<ResourceDto> searchResources(String username, String query) {
+        if (query == null || query.isEmpty()) {
+            throw new InvalidParamException("Невалидный или отсутствующий поисковый запрос");
+        }
+        try {
+            String basePath = ResourcePathUtil.buildBasePath(userService.getUserIdByUsername(username));
+            List<Item> items = minioS3ServiceImpl.getObjectsInDirectory(basePath, true);
+            List<ResourceDto>  resources = items.stream()
+                    .filter(item -> ResourcePathUtil.getResourceName(item.objectName()).contains(query))
+                    .map(resourceMapper::toDto)
+                    .toList();
+            return resources;
+        } catch (Exception e) {
+            throw new ResourceServiceException("Непредвиденная ошибка при получении данных", e);
         }
     }
 }

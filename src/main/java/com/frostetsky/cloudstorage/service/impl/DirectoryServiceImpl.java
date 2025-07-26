@@ -4,7 +4,7 @@ import com.frostetsky.cloudstorage.dto.ResourceDto;
 import com.frostetsky.cloudstorage.excepiton.ResourceAlreadyExistException;
 import com.frostetsky.cloudstorage.excepiton.ResourceNotFoundException;
 import com.frostetsky.cloudstorage.excepiton.DirectoryServiceException;
-import com.frostetsky.cloudstorage.excepiton.InvalidPathException;
+import com.frostetsky.cloudstorage.excepiton.InvalidParamException;
 import com.frostetsky.cloudstorage.mapper.ResourceMapper;
 import com.frostetsky.cloudstorage.service.DirectoryService;
 import com.frostetsky.cloudstorage.service.S3Service;
@@ -15,7 +15,6 @@ import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -29,26 +28,18 @@ public class DirectoryServiceImpl implements DirectoryService {
 
     public List<ResourceDto> getDirectoryFiles(String username, String path) {
         if (path == null) {
-            throw new InvalidPathException("Не передан path");
+            throw new InvalidParamException("Не передан path");
         }
         String fullPath = ResourcePathUtil.buildBasePath(userService.getUserIdByUsername(username)) + path;
         if (!s3Service.checkExistObject(fullPath)) {
             throw new ResourceNotFoundException("Папка не существует");
         }
-        List<ResourceDto> files = new ArrayList<>();
         try {
-            var results = s3Service.getObjectsInDirectory(fullPath, false);
-            for (var result : results) {
-                try {
-                    Item item = result.get();
-                    if (fullPath.equals(item.objectName())) {
-                        continue;
-                    }
-                    files.add(resourceMapper.toDto(item));
-                } catch (Exception e) {
-                    throw new DirectoryServiceException("Failed to map item to DTO", e);
-                }
-            }
+            List<Item> items = s3Service.getObjectsInDirectory(fullPath, false);
+            List<ResourceDto> files = items.stream()
+                    .filter(item -> !fullPath.equals(item.objectName()))
+                    .map(resourceMapper::toDto)
+                    .toList();
             return files;
         } catch (Exception e) {
             throw new DirectoryServiceException("Произошла ошибка при получении содержимого папки", e);
@@ -57,7 +48,7 @@ public class DirectoryServiceImpl implements DirectoryService {
 
     public ResourceDto createDirectory(String username, String path) {
         if (path == null || path.isEmpty()) {
-            throw new InvalidPathException("Не передан path");
+            throw new InvalidParamException("Не передан path");
         }
         String fullPath = ResourcePathUtil.buildBasePath(userService.getUserIdByUsername(username)) + path;
         if (!s3Service.checkExistObject(ResourcePathUtil.getParentDirectoryPath(fullPath))) {

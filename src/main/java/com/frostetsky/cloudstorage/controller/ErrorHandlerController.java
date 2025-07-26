@@ -35,8 +35,8 @@ public class ErrorHandlerController {
         return ResponseEntity.badRequest().body(new ErrorResponse(message));
     }
 
-    @ExceptionHandler(InvalidPathException.class)
-    public ResponseEntity<ErrorResponse> handleValidationExceptions(InvalidPathException e) {
+    @ExceptionHandler(InvalidParamException.class)
+    public ResponseEntity<ErrorResponse> handleValidationExceptions(InvalidParamException e) {
         log.error("Ошибка. Некорректный путь папки: {}", e.getMessage(), e);
         return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
     }

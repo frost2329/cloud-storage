@@ -58,4 +58,11 @@ public class ResourceController {
         ResourceDto result = resourceService.moveResource(pathFrom, pathTo);
         return ResponseEntity.ok().body(result);
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<ResourceDto>> searchResource(@RequestParam("query") String query){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        List<ResourceDto> resources = resourceService.searchResources(authentication.getName(), query);
+        return ResponseEntity.ok().body(resources);
+    }
 }
