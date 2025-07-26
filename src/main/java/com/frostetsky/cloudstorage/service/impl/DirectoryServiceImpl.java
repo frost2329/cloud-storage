@@ -1,6 +1,6 @@
 package com.frostetsky.cloudstorage.service.impl;
 
-import com.frostetsky.cloudstorage.dto.ResourceDto;
+import com.frostetsky.cloudstorage.dto.ResourceResponse;
 import com.frostetsky.cloudstorage.excepiton.ResourceAlreadyExistException;
 import com.frostetsky.cloudstorage.excepiton.ResourceNotFoundException;
 import com.frostetsky.cloudstorage.excepiton.DirectoryServiceException;
@@ -26,32 +26,33 @@ public class DirectoryServiceImpl implements DirectoryService {
     private final S3Service s3Service;
 
 
-    public List<ResourceDto> getDirectoryFiles(String username, String path) {
+    public List<ResourceResponse> getDirectoryFiles(String username, String path) {
         if (path == null) {
             throw new InvalidParamException("Не передан path");
         }
-        String fullPath = ResourcePathUtil.buildBasePath(userService.getUserIdByUsername(username)) + path;
+        String basePath = ResourcePathUtil.buildBasePath(userService.getUserIdByUsername(username));
+        String fullPath = basePath  + path;
         if (!s3Service.checkExistObject(fullPath)) {
             throw new ResourceNotFoundException("Папка не существует");
         }
         try {
             List<Item> items = s3Service.getObjectsInDirectory(fullPath, false);
-            List<ResourceDto> files = items.stream()
+            return items.stream()
                     .filter(item -> !fullPath.equals(item.objectName()))
                     .map(resourceMapper::toDto)
                     .toList();
-            return files;
         } catch (Exception e) {
             throw new DirectoryServiceException("Произошла ошибка при получении содержимого папки", e);
         }
     }
 
-    public ResourceDto createDirectory(String username, String path) {
+    public ResourceResponse createDirectory(String username, String path) {
         if (path == null || path.isEmpty()) {
             throw new InvalidParamException("Не передан path");
         }
-        String fullPath = ResourcePathUtil.buildBasePath(userService.getUserIdByUsername(username)) + path;
-        if (!s3Service.checkExistObject(ResourcePathUtil.getParentDirectoryPath(fullPath))) {
+        String basePath = ResourcePathUtil.buildBasePath(userService.getUserIdByUsername(username));
+        String fullPath = basePath  + path;
+        if (!s3Service.checkExistObject(basePath + ResourcePathUtil.getParentDirectoryPath(fullPath))) {
             throw new ResourceNotFoundException("Родительская папка не существует");
         }
         if (s3Service.checkExistObject(fullPath)) {

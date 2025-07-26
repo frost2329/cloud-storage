@@ -1,14 +1,14 @@
 package com.frostetsky.cloudstorage.service;
 
-import com.frostetsky.cloudstorage.dto.ResourceDto;
+import com.frostetsky.cloudstorage.dto.ResourceResponse;
 
 import java.util.List;
 
 public interface DirectoryService {
 
-    List<ResourceDto> getDirectoryFiles(String username, String path);
+    List<ResourceResponse> getDirectoryFiles(String username, String path);
 
     void createBaseDirectory(String username);
 
-    ResourceDto createDirectory(String username, String path);
+    ResourceResponse createDirectory(String username, String path);
 }

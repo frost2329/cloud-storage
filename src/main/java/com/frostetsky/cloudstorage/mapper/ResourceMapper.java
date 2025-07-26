@@ -1,6 +1,6 @@
 package com.frostetsky.cloudstorage.mapper;
 
-import com.frostetsky.cloudstorage.dto.ResourceDto;
+import com.frostetsky.cloudstorage.dto.ResourceResponse;
 
 import com.frostetsky.cloudstorage.util.ResourcePathUtil;
 import io.minio.StatObjectResponse;
@@ -9,29 +9,19 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ResourceMapper {
-    public ResourceDto toDto(Item object) {
-        String objectName = object.objectName();
-        return new ResourceDto(
-                ResourcePathUtil.getParentDirectoryPath(objectName),
-                ResourcePathUtil.getResourceName(objectName),
-                objectName.endsWith("/") ?  null :object.size(),
-                ResourcePathUtil.getResourceType(objectName));
+    public ResourceResponse toDto(Item object) {
+        return toDto(object.objectName(), object.size());
     }
 
-    public ResourceDto toDto(String resourcePathName, Long fileSize) {
-        return new ResourceDto(
-                ResourcePathUtil.getParentDirectoryPath(resourcePathName),
-                ResourcePathUtil.getResourceName(resourcePathName),
-                fileSize,
-                ResourcePathUtil.getResourceType(resourcePathName));
+    public ResourceResponse toDto(StatObjectResponse info) {
+        return toDto(info.object(), info.size());
     }
 
-    public ResourceDto toDto(StatObjectResponse info) {
-        String object = info.object();
-        return new ResourceDto(
-                ResourcePathUtil.getParentDirectoryPath(object),
-                ResourcePathUtil.getResourceName(object),
-                info.size(),
-                ResourcePathUtil.getResourceType(object));
+    public ResourceResponse toDto(String path, Long fileSize) {
+        return new ResourceResponse(
+                ResourcePathUtil.getParentDirectoryPath(path),
+                ResourcePathUtil.getResourceName(path),
+                ResourcePathUtil.isDirectory(path) ? null : fileSize,
+                ResourcePathUtil.getResourceType(path));
     }
 }

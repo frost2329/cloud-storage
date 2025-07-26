@@ -19,7 +19,7 @@ public class ResourcePathUtil {
     }
 
     public static String buildZipArchiveName(String objectName) {
-        String zipName = ResourcePathUtil.getResourceName(objectName);
+        String zipName = getResourceName(objectName);
         zipName = objectName.endsWith("/")
                 ? objectName.substring(0, objectName.length() - 1)
                 : objectName;
@@ -28,8 +28,8 @@ public class ResourcePathUtil {
 
     public static String getParentDirectoryPath(String objectName) {
         String objectNameWithoutSlash = StringUtils.removeEnd(objectName, "/");
-        int lastSlashIndex = objectNameWithoutSlash.lastIndexOf('/');
-        return objectNameWithoutSlash.substring(0, lastSlashIndex + 1);
+        int lastSlash = objectNameWithoutSlash.lastIndexOf('/');
+        return objectNameWithoutSlash.substring(objectName.indexOf("/") + 1, lastSlash + 1);
     }
 
     public static String getResourceType(String objectName) {

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     @GetMapping("/me")
-    public ResponseEntity getCurrentUser() {
+    public ResponseEntity<CurrentUserResponse> getCurrentUser() {
         Authentication authentication= SecurityContextHolder.getContext().getAuthentication();
         return ResponseEntity.status(HttpStatus.OK).body(new CurrentUserResponse(authentication.getName()));
     }

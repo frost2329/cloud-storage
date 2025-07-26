@@ -1,7 +1,7 @@
 package com.frostetsky.cloudstorage.controller;
 
 import com.frostetsky.cloudstorage.dto.DownloadResultDto;
-import com.frostetsky.cloudstorage.dto.ResourceDto;
+import com.frostetsky.cloudstorage.dto.ResourceResponse;
 import com.frostetsky.cloudstorage.service.ResourceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -24,28 +24,31 @@ public class ResourceController {
     private final ResourceService resourceService;
 
     @GetMapping()
-    public ResponseEntity<ResourceDto> getResourceInfo(@RequestParam String path) {
-        ResourceDto resource = resourceService.getResourceInfo(path);
+    public ResponseEntity<ResourceResponse> getResourceInfo(@RequestParam String path) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        ResourceResponse resource = resourceService.getResourceInfo(authentication.getName(), path);
         return ResponseEntity.status(HttpStatus.OK).body(resource);
     }
 
     @PostMapping()
-    public ResponseEntity<List<ResourceDto>> upload(@RequestParam String path,
-                                 @RequestParam MultipartFile[] object) {
+    public ResponseEntity<List<ResourceResponse>> uploadResource(@RequestParam String path,
+                                                                 @RequestParam MultipartFile[] object) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        List<ResourceDto> resources = resourceService.upload(authentication.getName(), path, object);
+        List<ResourceResponse> resources = resourceService.upload(authentication.getName(), path, object);
         return ResponseEntity.status(HttpStatus.CREATED).body(resources);
     }
 
     @DeleteMapping()
-    public ResponseEntity<Void> delete(@RequestParam String path) {
-        resourceService.deleteResource(path);
+    public ResponseEntity<Void> deleteResource(@RequestParam String path) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        resourceService.deleteResource(authentication.getName(), path);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @GetMapping("/download")
     public ResponseEntity<StreamingResponseBody> downloadResource(@RequestParam String path) {
-        DownloadResultDto result = resourceService.downloadResource(path);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        DownloadResultDto result = resourceService.downloadResource(authentication.getName(), path);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + result.fileName() + "\"")
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
@@ -53,16 +56,17 @@ public class ResourceController {
     }
 
     @GetMapping("/move")
-    public ResponseEntity<ResourceDto> downloadResource(@RequestParam("from") String pathFrom,
-                                                        @RequestParam("to") String pathTo) {
-        ResourceDto result = resourceService.moveResource(pathFrom, pathTo);
+    public ResponseEntity<ResourceResponse> downloadResource(@RequestParam("from") String pathFrom,
+                                                             @RequestParam("to") String pathTo) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        ResourceResponse result = resourceService.moveResource(authentication.getName(), pathFrom, pathTo);
         return ResponseEntity.ok().body(result);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<ResourceDto>> searchResource(@RequestParam("query") String query){
+    public ResponseEntity<List<ResourceResponse>> searchResource(@RequestParam("query") String query){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        List<ResourceDto> resources = resourceService.searchResources(authentication.getName(), query);
+        List<ResourceResponse> resources = resourceService.searchResources(authentication.getName(), query);
         return ResponseEntity.ok().body(resources);
     }
 }

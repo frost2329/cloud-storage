@@ -1,6 +1,6 @@
 package com.frostetsky.cloudstorage.controller;
 
-import com.frostetsky.cloudstorage.dto.ResourceDto;
+import com.frostetsky.cloudstorage.dto.ResourceResponse;
 import com.frostetsky.cloudstorage.service.impl.DirectoryServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,16 +19,16 @@ public class DirectoryController {
     private final DirectoryServiceImpl directoryService;
 
     @GetMapping()
-    public ResponseEntity getDirectoryContent(@RequestParam String path) {
+    public ResponseEntity<List<ResourceResponse>> getDirectoryContent(@RequestParam String path) {
         Authentication authentication= SecurityContextHolder.getContext().getAuthentication();
-        List<ResourceDto> files = directoryService.getDirectoryFiles(authentication.getName(), path);
+        List<ResourceResponse> files = directoryService.getDirectoryFiles(authentication.getName(), path);
         return ResponseEntity.status(HttpStatus.OK).body(files);
     }
 
     @PostMapping()
-    public ResponseEntity createDirectory(@RequestParam String path) {
+    public ResponseEntity<ResourceResponse> createDirectory(@RequestParam String path) {
         Authentication authentication= SecurityContextHolder.getContext().getAuthentication();
-        ResourceDto directory = directoryService.createDirectory(authentication.getName(), path);
+        ResourceResponse directory = directoryService.createDirectory(authentication.getName(), path);
         return ResponseEntity.status(HttpStatus.OK).body(directory);
     }
 }

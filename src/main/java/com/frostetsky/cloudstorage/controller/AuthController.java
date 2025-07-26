@@ -29,7 +29,7 @@ public class AuthController {
     private final DirectoryService directoryService;
 
     @PostMapping("/sign-up")
-    public ResponseEntity registration(@RequestBody @Validated CreateUserRequest dto,
+    public ResponseEntity<CreateUserResponse> registration(@RequestBody @Validated CreateUserRequest dto,
                                        HttpServletRequest request) {
 
         CreateUserResponse createUserResponse = userService.createUser(dto);
@@ -48,7 +48,7 @@ public class AuthController {
     }
 
     @PostMapping("/sign-in")
-    public ResponseEntity login(@RequestBody @Validated LoginUserRequest dto,
+    public ResponseEntity<LoginUserResponse> login(@RequestBody @Validated LoginUserRequest dto,
                                 HttpServletRequest request) {
         Authentication auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(dto.username(), dto.password()));
