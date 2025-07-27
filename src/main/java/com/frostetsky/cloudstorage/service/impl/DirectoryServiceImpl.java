@@ -44,7 +44,7 @@ public class DirectoryServiceImpl implements DirectoryService {
     public ResourceResponse createDirectory(Long userId, String path) {
         String basePath = ResourcePathUtil.buildBasePath(userId);
         String fullPath = basePath  + path;
-        if (!s3Service.checkExistObject(basePath + ResourcePathUtil.getParentDirectoryPath(fullPath))) {
+        if (!s3Service.checkExistObject(basePath + ResourcePathUtil.extractParentDirectoryPath(fullPath))) {
             throw new ResourceNotFoundException("Родительская папка не существует");
         }
         if (s3Service.checkExistObject(fullPath)) {

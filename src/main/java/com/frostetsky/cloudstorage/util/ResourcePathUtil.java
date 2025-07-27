@@ -23,31 +23,40 @@ public class ResourcePathUtil {
         if (!withoutSlash.contains("/")) {
             return path;
         }
-        int lastSlashIndex = withoutSlash.lastIndexOf('/');
-        return path.substring(lastSlashIndex + 1);
+        int lastSlash = withoutSlash.lastIndexOf('/');
+        return path.substring(lastSlash + 1);
     }
 
-    public static String getParentDirectoryPath(String path) {
+    public static String extractParentDirectoryPath(String path) {
         path = removeBasePathPrefix(path);
-        String objectNameWithoutSlash = StringUtils.removeEnd(path, "/");
-        int lastSlash = objectNameWithoutSlash.lastIndexOf('/');
-        return objectNameWithoutSlash.substring(lastSlash + 1);
+        String withoutSlash = StringUtils.removeEnd(path, "/");
+        if (!withoutSlash.contains("/")) {
+            return "";
+        }
+        int lastSlash = withoutSlash.lastIndexOf('/');
+        return withoutSlash.substring(0, lastSlash + 1);
     }
 
     public static String removeBasePathPrefix(String path) {
         return path.replaceFirst(BASE_PATH_PREFIX_MASK, "");
     }
 
-    public static String buildZipArchiveName(String objectName) {
-        String zipName = extractResourceName(objectName);
-        zipName = objectName.endsWith("/")
-                ? objectName.substring(0, objectName.length() - 1)
-                : objectName;
-        return  zipName + ".zip";
+    public static String buildZipArchiveName(String path) {
+        if (!path.endsWith("/")) {
+            throw new IllegalArgumentException("Переданный путь не является папкой");
+        }
+        String zipName = extractResourceName(path);
+        if (zipName.isEmpty()) {
+            return "folder.zip";
+        }
+        return  zipName.substring(0, zipName.length() - 1) + ".zip";
     }
 
-    public static String getResourceType(String objectName) {
-        return objectName.endsWith("/")
+    public static String getResourceType(String path) {
+        if (path.isEmpty()) {
+            throw new IllegalArgumentException("Передан пустой путь");
+        }
+        return path.endsWith("/")
                 ? ResourceType.DIRECTORY.name()
                 : ResourceType.FILE.name();
     }
