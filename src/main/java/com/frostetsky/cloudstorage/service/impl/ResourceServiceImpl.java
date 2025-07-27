@@ -2,7 +2,6 @@ package com.frostetsky.cloudstorage.service.impl;
 
 import com.frostetsky.cloudstorage.dto.DownloadResultDto;
 import com.frostetsky.cloudstorage.dto.ResourceResponse;
-import com.frostetsky.cloudstorage.excepiton.InvalidParamException;
 import com.frostetsky.cloudstorage.excepiton.ResourceAlreadyExistException;
 import com.frostetsky.cloudstorage.excepiton.ResourceNotFoundException;
 import com.frostetsky.cloudstorage.excepiton.ResourceServiceException;
@@ -36,11 +35,11 @@ public class ResourceServiceImpl implements ResourceService {
     private final MinioS3ServiceImpl minioS3ServiceImpl;
 
     @Override
-    public List<ResourceResponse> upload(Long userId, String path, MultipartFile[] objects) {
+    public List<ResourceResponse> upload(Long userId, String path, MultipartFile[] files) {
         try {
             String basePath = ResourcePathUtil.buildBasePath(userId);
             List<ResourceResponse> resources = new ArrayList<>();
-            for (MultipartFile file : objects) {
+            for (MultipartFile file : files) {
                 String fullPath = basePath + path + file.getOriginalFilename();
                 if (s3Service.checkExistObject(fullPath)) {
                     throw new ResourceAlreadyExistException("Файл уже существует");
@@ -73,9 +72,6 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public void deleteResource(Long userId, String path) {
-        if (path == null || path.isEmpty()) {
-            throw new InvalidParamException("Не передан path");
-        }
         String fullPath = ResourcePathUtil.buildBasePath(userId) + path;
         if (!s3Service.checkExistObject(fullPath)) {
             throw new ResourceNotFoundException("Ресурс не найден");
@@ -95,9 +91,6 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public ResourceResponse getResourceInfo(Long userId, String path) {
-        if (path == null || path.isEmpty()) {
-            throw new InvalidParamException("Не передан path");
-        }
         String fullPath = ResourcePathUtil.buildBasePath(userId) + path;
         try {
             StatObjectResponse info = s3Service.getObjectInfo(fullPath);
@@ -111,9 +104,6 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public DownloadResultDto downloadResource(Long userId, String path) {
-        if (path == null || path.isEmpty()) {
-            throw new InvalidParamException("Не передан path");
-        }
         String fullPath = ResourcePathUtil.buildBasePath(userId) + path;
         if (!s3Service.checkExistObject(fullPath)) {
             throw new ResourceNotFoundException("Ресурс не найден");
@@ -124,7 +114,7 @@ public class ResourceServiceImpl implements ResourceService {
                     downloadDirectory(fullPath));
         } else {
             return new DownloadResultDto(
-                    ResourcePathUtil.getResourceName(fullPath),
+                    ResourcePathUtil.extractResourceName(fullPath),
                     downloadFile(fullPath));
         }
     }
@@ -184,15 +174,8 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public ResourceResponse moveResource(Long userId, String pathFrom, String pathTo) {
-        if (pathFrom == null || pathFrom.isEmpty()) {
-            throw new InvalidParamException("Не передан pathFrom");
-        }
-        if (pathTo == null || pathTo.isEmpty()) {
-            throw new InvalidParamException("Не передан pathTo");
-        }
         pathFrom = ResourcePathUtil.buildBasePath(userId) + pathFrom;
         pathTo = ResourcePathUtil.buildBasePath(userId) + pathTo;
-
         if (!s3Service.checkExistObject(pathFrom)) {
             throw new ResourceNotFoundException("Ресурс не найден");
         }
@@ -233,14 +216,14 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public List<ResourceResponse> searchResources(Long userId, String query) {
-        if (query == null || query.isEmpty()) {
-            throw new InvalidParamException("Невалидный или отсутствующий поисковый запрос");
-        }
         try {
             String basePath = ResourcePathUtil.buildBasePath(userId);
             List<Item> items = minioS3ServiceImpl.getObjectsInDirectory(basePath, true);
             return items.stream()
-                    .filter(item -> ResourcePathUtil.getResourceName(item.objectName()).contains(query))
+                    .filter(item -> {
+                        String itemName = ResourcePathUtil.extractResourceName(item.objectName());
+                        return itemName.contains(query);
+                    })
                     .map(resourceMapper::toDto)
                     .toList();
         } catch (Exception e) {

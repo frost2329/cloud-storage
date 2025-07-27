@@ -7,7 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public interface ResourceService {
-    List<ResourceResponse> upload(Long userId, String path, MultipartFile[] objects);
+    List<ResourceResponse> upload(Long userId, String path, MultipartFile[] files);
 
     void deleteResource(Long userId, String path);
 

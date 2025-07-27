@@ -9,7 +9,6 @@ public class UnexpectedErrorException extends BaseException {
     public UnexpectedErrorException() {
         this(null);
     }
-
     public UnexpectedErrorException(Exception e) {
         super(STATUS_CODE, MESSAGE, e);
     }

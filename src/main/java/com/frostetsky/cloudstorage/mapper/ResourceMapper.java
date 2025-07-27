@@ -20,7 +20,7 @@ public class ResourceMapper {
     public ResourceResponse toDto(String path, Long fileSize) {
         return new ResourceResponse(
                 ResourcePathUtil.getParentDirectoryPath(path),
-                ResourcePathUtil.getResourceName(path),
+                ResourcePathUtil.extractResourceName(path),
                 ResourcePathUtil.isDirectory(path) ? null : fileSize,
                 ResourcePathUtil.getResourceType(path));
     }

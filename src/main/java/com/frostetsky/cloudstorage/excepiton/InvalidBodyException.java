@@ -2,15 +2,15 @@ package com.frostetsky.cloudstorage.excepiton;
 
 import org.springframework.http.HttpStatus;
 
-public class InvalidParamException extends BaseException {
+public class InvalidBodyException extends BaseException {
 
     private static final int STATUS_CODE = HttpStatus.BAD_REQUEST.value();
 
-    public InvalidParamException(String message) {
-        this(null, message);
+    public InvalidBodyException(String message) {
+        this(message, null);
     }
 
-    public InvalidParamException(Exception e, String message) {
+    public InvalidBodyException(String message, Exception e) {
         super(STATUS_CODE, message, e);
     }
 }

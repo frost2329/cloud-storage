@@ -3,6 +3,7 @@ package com.frostetsky.cloudstorage.controller;
 import com.frostetsky.cloudstorage.dto.ResourceResponse;
 import com.frostetsky.cloudstorage.model.CustomUserDetails;
 import com.frostetsky.cloudstorage.service.DirectoryService;
+import com.frostetsky.cloudstorage.service.impl.ValidationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +18,11 @@ import java.util.List;
 public class DirectoryController {
 
     private final DirectoryService directoryService;
+    private final ValidationService validationService;
 
     @GetMapping()
     public ResponseEntity<List<ResourceResponse>> getDirectoryContent(@RequestParam String path) {
+        validationService.validatePath(path);
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
                 .getAuthentication().getPrincipal();
         List<ResourceResponse> files = directoryService.getDirectoryFiles(userDetails.getUser().getId(), path);
@@ -28,6 +31,7 @@ public class DirectoryController {
 
     @PostMapping()
     public ResponseEntity<ResourceResponse> createDirectory(@RequestParam String path) {
+        validationService.validatePath(path);
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
                 .getAuthentication().getPrincipal();
         ResourceResponse directory = directoryService.createDirectory(userDetails.getUser().getId(), path);

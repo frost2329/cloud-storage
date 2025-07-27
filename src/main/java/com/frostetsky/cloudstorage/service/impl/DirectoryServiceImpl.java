@@ -4,7 +4,6 @@ import com.frostetsky.cloudstorage.dto.ResourceResponse;
 import com.frostetsky.cloudstorage.excepiton.ResourceAlreadyExistException;
 import com.frostetsky.cloudstorage.excepiton.ResourceNotFoundException;
 import com.frostetsky.cloudstorage.excepiton.DirectoryServiceException;
-import com.frostetsky.cloudstorage.excepiton.InvalidParamException;
 import com.frostetsky.cloudstorage.mapper.ResourceMapper;
 import com.frostetsky.cloudstorage.service.DirectoryService;
 import com.frostetsky.cloudstorage.service.S3Service;
@@ -27,9 +26,6 @@ public class DirectoryServiceImpl implements DirectoryService {
 
     @Override
     public List<ResourceResponse> getDirectoryFiles(Long userId, String path) {
-        if (path == null) {
-            throw new InvalidParamException("Не передан path");
-        }
         String fullPath = ResourcePathUtil.buildBasePath(userId)  + path;
         if (!s3Service.checkExistObject(fullPath)) {
             throw new ResourceNotFoundException("Папка не существует");
@@ -46,9 +42,6 @@ public class DirectoryServiceImpl implements DirectoryService {
     }
     @Override
     public ResourceResponse createDirectory(Long userId, String path) {
-        if (path == null || path.isEmpty()) {
-            throw new InvalidParamException("Не передан path");
-        }
         String basePath = ResourcePathUtil.buildBasePath(userId);
         String fullPath = basePath  + path;
         if (!s3Service.checkExistObject(basePath + ResourcePathUtil.getParentDirectoryPath(fullPath))) {
@@ -68,7 +61,9 @@ public class DirectoryServiceImpl implements DirectoryService {
     public void createBaseDirectory(String username) {
         String basePath = ResourcePathUtil.buildBasePath(userService.getUserIdByUsername(username));
         try {
-            s3Service.createEmptyDir(basePath);
+            if(!s3Service.checkExistObject(basePath)) {
+                s3Service.createEmptyDir(basePath);
+            }
         } catch (Exception e) {
             throw new DirectoryServiceException("Произошла ошибка при создании папки", e);
         }

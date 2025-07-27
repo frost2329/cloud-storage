@@ -12,24 +12,38 @@ import java.util.List;
 
 public class ResourcePathUtil {
 
-    public static String getResourceName(String objectName) {
-        String objectNameWithoutSlash = StringUtils.removeEnd(objectName, "/");
-        int lastSlashIndex = objectNameWithoutSlash.lastIndexOf('/');
-        return objectName.substring(lastSlashIndex + 1);
+    private static final String BASE_PATH_PREFIX_MASK = "^user-\\d+-files/";
+
+    public static String extractResourceName(String path) {
+        path = removeBasePathPrefix(path);
+        if(path.isEmpty()) {
+            return "";
+        }
+        String withoutSlash = StringUtils.removeEnd(path, "/");
+        if (!withoutSlash.contains("/")) {
+            return path;
+        }
+        int lastSlashIndex = withoutSlash.lastIndexOf('/');
+        return path.substring(lastSlashIndex + 1);
+    }
+
+    public static String getParentDirectoryPath(String path) {
+        path = removeBasePathPrefix(path);
+        String objectNameWithoutSlash = StringUtils.removeEnd(path, "/");
+        int lastSlash = objectNameWithoutSlash.lastIndexOf('/');
+        return objectNameWithoutSlash.substring(lastSlash + 1);
+    }
+
+    public static String removeBasePathPrefix(String path) {
+        return path.replaceFirst(BASE_PATH_PREFIX_MASK, "");
     }
 
     public static String buildZipArchiveName(String objectName) {
-        String zipName = getResourceName(objectName);
+        String zipName = extractResourceName(objectName);
         zipName = objectName.endsWith("/")
                 ? objectName.substring(0, objectName.length() - 1)
                 : objectName;
         return  zipName + ".zip";
-    }
-
-    public static String getParentDirectoryPath(String objectName) {
-        String objectNameWithoutSlash = StringUtils.removeEnd(objectName, "/");
-        int lastSlash = objectNameWithoutSlash.lastIndexOf('/');
-        return objectNameWithoutSlash.substring(objectName.indexOf("/") + 1, lastSlash + 1);
     }
 
     public static String getResourceType(String objectName) {

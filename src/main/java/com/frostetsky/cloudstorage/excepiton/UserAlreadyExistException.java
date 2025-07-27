@@ -4,6 +4,7 @@ package com.frostetsky.cloudstorage.excepiton;
 import org.springframework.http.HttpStatus;
 
 public class UserAlreadyExistException extends BaseException {
+
     private static final int STATUS_CODE = HttpStatus.CONFLICT.value();
     private static final String MESSAGE = "Пользователь с этим логином  уже существует";
 
