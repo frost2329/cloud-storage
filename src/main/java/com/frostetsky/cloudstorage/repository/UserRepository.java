@@ -1,6 +1,6 @@
 package com.frostetsky.cloudstorage.repository;
 
-import com.frostetsky.cloudstorage.entity.User;
+import com.frostetsky.cloudstorage.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

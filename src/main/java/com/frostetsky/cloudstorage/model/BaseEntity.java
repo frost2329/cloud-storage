@@ -1,4 +1,4 @@
-package com.frostetsky.cloudstorage.entity;
+package com.frostetsky.cloudstorage.model;
 
 import java.io.Serializable;
 

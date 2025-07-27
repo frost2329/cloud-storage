@@ -25,13 +25,12 @@ public class DirectoryServiceImpl implements DirectoryService {
     private final ResourceMapper resourceMapper;
     private final S3Service s3Service;
 
-
-    public List<ResourceResponse> getDirectoryFiles(String username, String path) {
+    @Override
+    public List<ResourceResponse> getDirectoryFiles(Long userId, String path) {
         if (path == null) {
             throw new InvalidParamException("Не передан path");
         }
-        String basePath = ResourcePathUtil.buildBasePath(userService.getUserIdByUsername(username));
-        String fullPath = basePath  + path;
+        String fullPath = ResourcePathUtil.buildBasePath(userId)  + path;
         if (!s3Service.checkExistObject(fullPath)) {
             throw new ResourceNotFoundException("Папка не существует");
         }
@@ -45,12 +44,12 @@ public class DirectoryServiceImpl implements DirectoryService {
             throw new DirectoryServiceException("Произошла ошибка при получении содержимого папки", e);
         }
     }
-
-    public ResourceResponse createDirectory(String username, String path) {
+    @Override
+    public ResourceResponse createDirectory(Long userId, String path) {
         if (path == null || path.isEmpty()) {
             throw new InvalidParamException("Не передан path");
         }
-        String basePath = ResourcePathUtil.buildBasePath(userService.getUserIdByUsername(username));
+        String basePath = ResourcePathUtil.buildBasePath(userId);
         String fullPath = basePath  + path;
         if (!s3Service.checkExistObject(basePath + ResourcePathUtil.getParentDirectoryPath(fullPath))) {
             throw new ResourceNotFoundException("Родительская папка не существует");

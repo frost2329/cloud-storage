@@ -7,15 +7,15 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public interface ResourceService {
-    List<ResourceResponse> upload(String username, String path, MultipartFile[] objects);
+    List<ResourceResponse> upload(Long userId, String path, MultipartFile[] objects);
 
-    void deleteResource(String username, String path);
+    void deleteResource(Long userId, String path);
 
-    ResourceResponse getResourceInfo(String username, String path);
+    ResourceResponse getResourceInfo(Long userId, String path);
 
-    DownloadResultDto downloadResource(String username, String path);
+    DownloadResultDto downloadResource(Long userId, String path);
 
-    ResourceResponse moveResource(String username, String pathFrom, String pathTo);
+    ResourceResponse moveResource(Long userId, String pathFrom, String pathTo);
 
-    List<ResourceResponse> searchResources(String username, String query);
+    List<ResourceResponse> searchResources(Long userId, String query);
 }

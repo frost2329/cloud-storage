@@ -2,7 +2,8 @@ package com.frostetsky.cloudstorage.service.impl;
 
 import com.frostetsky.cloudstorage.dto.CreateUserRequest;
 import com.frostetsky.cloudstorage.dto.CreateUserResponse;
-import com.frostetsky.cloudstorage.entity.User;
+import com.frostetsky.cloudstorage.model.CustomUserDetails;
+import com.frostetsky.cloudstorage.model.User;
 import com.frostetsky.cloudstorage.excepiton.UserAlreadyExistException;
 import com.frostetsky.cloudstorage.repository.UserRepository;
 import com.frostetsky.cloudstorage.service.UserService;
@@ -13,8 +14,6 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Collections;
 
 @Service
 @RequiredArgsConstructor
@@ -43,11 +42,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.getUserByUsername(username)
-                .map(user -> new org.springframework.security.core.userdetails.User(
-                        user.getUsername(),
-                        user.getPassword(),
-                        Collections.emptyList()
-                )).orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+        User user = userRepository.getUserByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+        return new CustomUserDetails(user);
     }
 }
