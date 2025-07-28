@@ -8,42 +8,55 @@ import com.frostetsky.cloudstorage.excepiton.UserAlreadyExistException;
 import com.frostetsky.cloudstorage.repository.UserRepository;
 import com.frostetsky.cloudstorage.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @Transactional(readOnly = true)
     public Long getUserIdByUsername(String username) {
+        log.info("Получение ID пользователя: username={}", username);
         return userRepository.getUserByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Пользователь с username %s не найден".formatted(username)))
+                .orElseThrow(() -> {
+                    log.error("Пользователь не найден: username={}", username);
+                    return new UsernameNotFoundException("Пользователь с username %s не найден".formatted(username));
+                })
                 .getId();
     }
 
     @Transactional
     public CreateUserResponse createUser(CreateUserRequest dto) {
+        log.info("Создание нового пользователя: username={}", dto.username());
         try {
             User user = userRepository.save(User.builder()
                     .username(dto.username())
                     .password(passwordEncoder.encode(dto.password()))
                     .build());
+            log.info("Пользователь успешно создан: username={}", dto.username());
             return new CreateUserResponse(user.getUsername());
         } catch (DataIntegrityViolationException e) {
+            log.error("Ошибка при создании пользователя: username={}", dto.username());
             throw new UserAlreadyExistException(e);
         }
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        log.info("Загрузка пользователя: username={}", username);
         User user = userRepository.getUserByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+                .orElseThrow(() -> {
+                    log.error("Пользователь  не найден: username={}", username);
+                    return new UsernameNotFoundException("Пользователь не найден");
+                });
         return new CustomUserDetails(user);
     }
 }
