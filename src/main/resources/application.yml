@@ -31,5 +31,3 @@ logging:
       max-file-size: 10MB
       max-history: 7
       total-size-cap: 1GB
-
-
