@@ -1,3 +1,4 @@
+-- changeset frost:1
 create table users
 (
     id bigserial primary key,

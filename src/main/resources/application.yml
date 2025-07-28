@@ -5,6 +5,12 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    enabled: true
+    user: ${spring.datasource.username}
+    password: ${spring.datasource.password}
+    url: ${spring.datasource.url}
 
 minio:
   url : ${MINIO_URL}
@@ -25,4 +31,5 @@ logging:
       max-file-size: 10MB
       max-history: 7
       total-size-cap: 1GB
+
 
