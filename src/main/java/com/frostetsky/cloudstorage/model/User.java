@@ -4,6 +4,8 @@ package com.frostetsky.cloudstorage.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.io.Serializable;
+
 @Setter
 @Getter
 @ToString
@@ -12,7 +14,7 @@ import lombok.*;
 @Builder
 @Entity
 @Table(name = "users", schema = "public")
-public class User implements BaseEntity<Long> {
+public class User implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
