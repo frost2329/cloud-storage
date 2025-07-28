@@ -3,7 +3,7 @@ package com.frostetsky.cloudstorage.controller;
 import com.frostetsky.cloudstorage.dto.ResourceResponse;
 import com.frostetsky.cloudstorage.model.CustomUserDetails;
 import com.frostetsky.cloudstorage.service.DirectoryService;
-import com.frostetsky.cloudstorage.service.impl.ValidationService;
+import com.frostetsky.cloudstorage.service.ValidationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

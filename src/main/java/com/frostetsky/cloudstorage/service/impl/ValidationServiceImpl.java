@@ -2,14 +2,15 @@ package com.frostetsky.cloudstorage.service.impl;
 
 import com.frostetsky.cloudstorage.excepiton.InvalidBodyException;
 import com.frostetsky.cloudstorage.excepiton.InvalidParamException;
+import com.frostetsky.cloudstorage.service.ValidationService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
-public class ValidationService {
+public class ValidationServiceImpl implements ValidationService {
     private static final String PATH_REGEX = "^$|^[a-zA-Z0-9_\\-./]+$";
     private static final String QUERY_REGEX = "^[a-zA-Z0-9_\\-.]+$";
-    private static final long MAX_FILE_SIZE = 100 * 1024 * 1024;
+    private static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
 
     public void validatePath(String path) {
         if (path == null) {

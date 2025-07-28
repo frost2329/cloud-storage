@@ -10,6 +10,7 @@ import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,11 +22,13 @@ import static com.frostetsky.cloudstorage.constants.MinioConstants.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MinioS3ServiceImpl implements S3Service {
     private final MinioClient minioClient;
 
     @Override
     public List<Item> getObjectsInDirectory(String path, boolean recursive) {
+        log.info("Получение объектов в директории: path={}, recursive={}", path, recursive);
         try {
             List<Item> resultItems = new ArrayList<>();
             Iterable<Result<Item>> results =  minioClient.listObjects(
@@ -35,43 +38,56 @@ public class MinioS3ServiceImpl implements S3Service {
                             .recursive(recursive)
                             .build());
             for (Result<Item> result : results) {
-                resultItems.add(result.get());
+                Item item = result.get();
+                resultItems.add(item);
+                log.debug("Получен объект: item={}, size={}", item.objectName(), item.size());
             }
+            log.info("Успешно получено {} объектов из директории {}", resultItems.size(), path);
             return resultItems;
         } catch (Exception e) {
-            throw new MinioServiceException("Произошла непредвиденная ошибка получении файлов", e);
+            log.error("Ошибка при получении файлов из хранилища: path={}", path, e);
+            throw new MinioServiceException("Ошибка при получении файлов из хранилища", e);
         }
     }
 
     @Override
     @SneakyThrows
     public ObjectWriteResponse createEmptyDir(String path) {
+        log.info("Создание директории: path={}", path);
         try {
-            return minioClient.putObject(PutObjectArgs.builder()
+            ObjectWriteResponse response = minioClient.putObject(PutObjectArgs.builder()
                     .bucket(BUCKET_NAME)
                     .object(path)
                     .stream(EMPTY_DIR_BYTEARRAY_STREAM, EMPTY_DIR_SIZE, PART_SIZE)
                     .build());
+            log.info("Директория успешно создана path={}", path);
+            return response;
         } catch (Exception e) {
-            throw new MinioServiceException("Произошла непредвиденная ошибка при создании директории", e);
+            log.error("Ошибка при создании директории в хранилище: path={}", path, e);
+            throw new MinioServiceException("Ошибка при создании директории в хранилище", e);
         }
     }
 
     @Override
     public ObjectWriteResponse putObject(String path, MultipartFile file) {
+        log.info("Отправка файла в хранилище: path={}, file={}", path, file.getOriginalFilename());
         try {
-            return minioClient.putObject(PutObjectArgs.builder()
+            ObjectWriteResponse response = minioClient.putObject(PutObjectArgs.builder()
                     .bucket(BUCKET_NAME)
                     .object(path)
                     .stream(file.getInputStream(), file.getSize(), PART_SIZE)
                     .build());
+            log.info("Файл успешно загружен в хранилище: path={}, file={}", path, response.object());
+            return response;
         } catch (Exception e) {
-            throw new MinioServiceException("Произошла непредвиденная ошибка при загрузки файла", e);
+            log.error("Ошибка при загрузки файла в хранилище: path={}", path, e);
+            throw new MinioServiceException("Ошибка при загрузки файла в хранилище", e);
         }
     }
 
     @Override
     public void deleteObjects(List<DeleteObject> objectsToDelete) {
+        log.info("Удаление файлов из хранилища: count={}", objectsToDelete.size());
         try {
             Iterable<Result<DeleteError>> deleteResults = minioClient.removeObjects(
                     RemoveObjectsArgs.builder()
@@ -79,48 +95,60 @@ public class MinioS3ServiceImpl implements S3Service {
                             .objects(objectsToDelete)
                             .build());
             for (Result<DeleteError> result : deleteResults) {
-                System.out.println(result.get().objectName());
+                log.debug("Файл успешно удален: path={}", result.get());
             }
+            log.info("Файлы успешно удалены: count={}", objectsToDelete.size());
         } catch (Exception e) {
+            log.error("Ошибка при удалении файлов из хранилища", e);
             throw new MinioServiceException("Произошла непредвиденная ошибка при удалении объекта", e);
         }
     }
 
     @Override
     public boolean checkExistObject(String path) {
+        log.info("Проверка наличия объекта в хранилище: path={}", path);
         try {
             minioClient.statObject(StatObjectArgs.builder()
                     .bucket(BUCKET_NAME)
                     .object(path)
                     .build());
+            log.info("Проверка завершена, файл найден: path={}", path);
             return true;
         } catch (ErrorResponseException e) {
             if (e.errorResponse().code().equals("NoSuchKey")) {
+                log.info("Проверка завершена, файл не найден: path={}", path);
                 return false;
             }
-            throw new MinioServiceException("Произошла непредвиденная ошибка при получении информации о файле", e);
+            log.error("Ошибка при удалении проверки наличия объекта в хранилище", e);
+            throw new MinioServiceException("Ошибка при удалении проверки наличия объекта в хранилище", e);
         } catch (Exception e) {
-            throw new MinioServiceException("Произошла непредвиденная ошибка при получении информации о файле", e);
+            log.error("Ошибка при удалении проверки наличия объекта в хранилище: path={}", path, e);
+            throw new MinioServiceException("Ошибка при удалении проверки наличия объекта в хранилище", e);
         }
     }
 
     @Override
     public InputStream downloadObject(String path) {
+        log.info("Загрузка файла из хранилища: path={}", path);
         try {
-            return minioClient.getObject(
+            GetObjectResponse object = minioClient.getObject(
                     GetObjectArgs.builder()
                             .bucket(BUCKET_NAME)
                             .object(path)
                             .build());
+            log.info("Файл успешно загружен: path={}", path);
+            return object;
         } catch (Exception e) {
-            throw new MinioServiceException("Произошла ошибка при загрузки файла", e);
+            log.error("Ошибка при загрузки файла из хранилища: path={}", path, e);
+            throw new MinioServiceException("Ошибка при загрузки файла из хранилища", e);
         }
     }
 
     @Override
     public ObjectWriteResponse copyObject(String pathFrom, String pathTo) {
+        log.info("Копирование файла: pathFrom={}, pathTo={}", pathFrom, pathTo);
         try {
-            return minioClient.copyObject(
+            ObjectWriteResponse response = minioClient.copyObject(
                     CopyObjectArgs.builder()
                             .bucket(BUCKET_NAME)
                             .object(pathTo)
@@ -129,25 +157,34 @@ public class MinioS3ServiceImpl implements S3Service {
                                     .object(pathFrom)
                                     .build())
                             .build());
+            log.info("Объект успешно скопирован: pathFrom={}, pathTo={}", pathFrom, pathTo);
+            return response;
         } catch (Exception e) {
-            throw new MinioServiceException("Произошла ошибка при загрузки файла", e);
+            log.error("Ошибка при копировании файла: pathFrom={}, pathTo={}", pathFrom, pathTo, e);
+            throw new MinioServiceException("Ошибка при копировании файла", e);
         }
     }
 
     @Override
     public StatObjectResponse getObjectInfo(String path) {
+        log.info("Получение информации об объекте: path={}", path);
         try {
-            return minioClient.statObject(StatObjectArgs.builder()
+            StatObjectResponse response = minioClient.statObject(StatObjectArgs.builder()
                     .bucket(BUCKET_NAME)
                     .object(path)
                     .build());
+            log.info("Информация успешно получение: path={}", path);
+            return response;
         } catch (ErrorResponseException e) {
             if (e.errorResponse().code().equals("NoSuchKey")) {
+                log.error("Объект не найден: path={}", path, e);
                 throw new ResourceNotFoundException("Ресурс не найден", e);
             }
-            throw new MinioServiceException("Произошла непредвиденная ошибка при получении информации о файле", e);
+            log.error("Ошибка при получении информации об объекте: path={}", path, e);
+            throw new MinioServiceException("Ошибка при получении информации об объекте", e);
         } catch (Exception e) {
-            throw new MinioServiceException("Произошла непредвиденная ошибка при получении информации о файле", e);
+            log.error("Ошибка при получении информации об объекте: path={}", path, e);
+            throw new MinioServiceException("Ошибка при получении информации об объекте", e);
         }
     }
 }

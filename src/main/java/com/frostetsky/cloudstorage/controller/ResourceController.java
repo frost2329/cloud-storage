@@ -4,7 +4,7 @@ import com.frostetsky.cloudstorage.dto.DownloadResultDto;
 import com.frostetsky.cloudstorage.dto.ResourceResponse;
 import com.frostetsky.cloudstorage.model.CustomUserDetails;
 import com.frostetsky.cloudstorage.service.ResourceService;
-import com.frostetsky.cloudstorage.service.impl.ValidationService;
+import com.frostetsky.cloudstorage.service.ValidationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
