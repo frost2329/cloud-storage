@@ -4,31 +4,23 @@ spring:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
-    driver-class-name: org.postgresql.Driver
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
     enabled: true
-    user: ${spring.datasource.username}
-    password: ${spring.datasource.password}
-    url: ${spring.datasource.url}
   session:
     timeout: 24h
+
 minio:
-  url : ${MINIO_URL}
+  url: ${MINIO_URL}
   accessKey: ${MINIO_ACCESS_KEY}
   secretKey: ${MINIO_SECRET_KEY}
 
 logging:
   file:
-    name: application.log
+    name: ./logs/application.log
   level:
     root: INFO
     org.springframework.web: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-  logback:
-    rollingpolicy:
-      max-file-size: 10MB
-      max-history: 7
-      total-size-cap: 1GB
