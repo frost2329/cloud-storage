@@ -2,6 +2,7 @@ package com.frostetsky.cloudstorage.service.impl;
 
 import com.frostetsky.cloudstorage.dto.CreateUserRequest;
 import com.frostetsky.cloudstorage.dto.CreateUserResponse;
+import com.frostetsky.cloudstorage.excepiton.UserServiceException;
 import com.frostetsky.cloudstorage.model.CustomUserDetails;
 import com.frostetsky.cloudstorage.model.User;
 import com.frostetsky.cloudstorage.excepiton.UserAlreadyExistException;
@@ -24,13 +25,18 @@ public class UserServiceImpl implements UserService {
 
     @Transactional(readOnly = true)
     public Long getUserIdByUsername(String username) {
-        log.info("Получение ID пользователя: username={}", username);
-        return userRepository.getUserByUsername(username)
-                .orElseThrow(() -> {
-                    log.error("Пользователь не найден: username={}", username);
-                    return new UsernameNotFoundException("Пользователь с username %s не найден".formatted(username));
-                })
-                .getId();
+        try {
+            log.info("Получение ID пользователя: username={}", username);
+            return userRepository.getUserByUsername(username)
+                    .orElseThrow(() -> {
+                        log.error("Пользователь не найден: username={}", username);
+                        return new UsernameNotFoundException("Пользователь с username %s не найден".formatted(username));
+                    })
+                    .getId();
+        } catch (Exception e) {
+            log.error("Ошибка при получении пользователя: username={}", username);
+            throw new UserServiceException("Ошибка при загрузки пользователя", e);
+        }
     }
 
     @Transactional
@@ -44,19 +50,28 @@ public class UserServiceImpl implements UserService {
             log.info("Пользователь успешно создан: username={}", dto.username());
             return new CreateUserResponse(user.getUsername());
         } catch (DataIntegrityViolationException e) {
-            log.error("Ошибка при создании пользователя: username={}", dto.username());
+            log.error("Ошибка при создании пользователя, имя пользователя занято: username={}", dto.username());
             throw new UserAlreadyExistException(e);
+        } catch (Exception e) {
+            log.error("Ошибка при создании пользователя: username={}", dto.username());
+            throw new UserServiceException("Ошибка при создании пользователя", e);
         }
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        log.info("Загрузка пользователя: username={}", username);
-        User user = userRepository.getUserByUsername(username)
-                .orElseThrow(() -> {
-                    log.error("Пользователь  не найден: username={}", username);
-                    return new UsernameNotFoundException("Пользователь не найден");
-                });
-        return new CustomUserDetails(user);
+        try {
+            log.info("Загрузка пользователя: username={}", username);
+            User user = userRepository.getUserByUsername(username)
+                    .orElseThrow(() -> {
+                        log.error("Пользователь  не найден: username={}", username);
+                        return new UsernameNotFoundException("Пользователь не найден");
+                    });
+            return new CustomUserDetails(user);
+        } catch (Exception e) {
+            log.error("Ошибка при загрузки пользователя: username={}", username);
+            throw new UserServiceException("шибка при загрузки пользователя", e);
+        }
+
     }
 }

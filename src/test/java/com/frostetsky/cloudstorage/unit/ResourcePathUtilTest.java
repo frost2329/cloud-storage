@@ -3,12 +3,14 @@ package com.frostetsky.cloudstorage.unit;
 import com.frostetsky.cloudstorage.dto.ResourceType;
 import com.frostetsky.cloudstorage.util.ResourcePathUtil;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 
+@SpringBootTest
 public class ResourcePathUtilTest {
 
     @Test
