@@ -40,7 +40,7 @@ public class ResourceController {
         validationService.validateFiles(files);
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
                 .getAuthentication().getPrincipal();
-        List<ResourceResponse> resources = resourceService.upload(userDetails.getUser().getId(), path, files);
+        List<ResourceResponse> resources = resourceService.uploadResource(userDetails.getUser().getId(), path, files);
         return ResponseEntity.status(HttpStatus.CREATED).body(resources);
     }
 

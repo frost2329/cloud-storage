@@ -27,6 +27,31 @@ public class MinioS3ServiceImpl implements S3Service {
     private final MinioClient minioClient;
 
     @Override
+    public boolean checkBaseBucketExists() {
+        log.info("Проверка наличия бакета: {}", BUCKET_NAME);
+        try {
+            return minioClient.bucketExists(BucketExistsArgs.builder().bucket(BUCKET_NAME).build());
+        } catch (Exception e) {
+            log.error("Ошибка при наличия бакета: {}", BUCKET_NAME, e);
+            throw new MinioServiceException("Ошибка при наличия бакета", e);
+        }
+    }
+
+    @Override
+    public void createBaseBucket() {
+        log.info("Создание базового бакета: {}", BUCKET_NAME);
+        try {
+            minioClient.makeBucket(MakeBucketArgs.builder()
+                    .bucket(BUCKET_NAME)
+                    .build());
+            log.info("Бакет {} успешно создан", BUCKET_NAME);
+        } catch (Exception e) {
+            log.error("Ошибка при создании базового бакета: {}", BUCKET_NAME, e);
+            throw new MinioServiceException("Ошибка при создании базового бакета", e);
+        }
+    }
+
+    @Override
     public List<Item> getObjectsInDirectory(String path, boolean recursive) {
         log.info("Получение объектов в директории: path={}, recursive={}", path, recursive);
         try {

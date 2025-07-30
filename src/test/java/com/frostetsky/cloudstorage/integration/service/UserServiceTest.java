@@ -3,6 +3,7 @@ package com.frostetsky.cloudstorage.integration.service;
 import com.frostetsky.cloudstorage.dto.CreateUserRequest;
 import com.frostetsky.cloudstorage.dto.CreateUserResponse;
 import com.frostetsky.cloudstorage.excepiton.UserAlreadyExistException;
+import com.frostetsky.cloudstorage.integration.config.TestConfig;
 import com.frostetsky.cloudstorage.model.User;
 import com.frostetsky.cloudstorage.repository.UserRepository;
 import com.frostetsky.cloudstorage.service.UserService;
@@ -10,11 +11,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import javax.sql.DataSource;
@@ -27,8 +25,8 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Testcontainers
-@SpringBootTest
 @ActiveProfiles("test")
+@SpringBootTest(classes = TestConfig.class)
 public class UserServiceTest {
 
     @Autowired
@@ -37,10 +35,6 @@ public class UserServiceTest {
     private DataSource dataSource;
     @Autowired
     private UserRepository userRepository;
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15");
 
 
     @BeforeEach

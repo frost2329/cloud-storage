@@ -32,28 +32,34 @@ public class ResourceServiceImpl implements ResourceService {
 
     private final ResourceMapper resourceMapper;
     private final S3Service s3Service;
-    private final MinioS3ServiceImpl minioS3ServiceImpl;
 
     @Override
-    public List<ResourceResponse> upload(Long userId, String path, MultipartFile[] files) {
+    public List<ResourceResponse> uploadResource(Long userId, String path, MultipartFile[] files) {
         try {
             String basePath = ResourcePathUtil.buildBasePath(userId);
             List<ResourceResponse> resources = new ArrayList<>();
+            if (!s3Service.checkExistObject(basePath + path)) {
+                throw new ResourceNotFoundException("Родительская папка не существует");
+            }
             for (MultipartFile file : files) {
                 String fullPath = basePath + path + file.getOriginalFilename();
-                if (s3Service.checkExistObject(fullPath)) {
-                    throw new ResourceAlreadyExistException("Файл уже существует");
-                }
-                createParentDirectories(fullPath);
-                ObjectWriteResponse response = s3Service.putObject(fullPath, file);
+                ObjectWriteResponse response = uploadFile(fullPath, file);
                 resources.add(resourceMapper.toDto(response.object(), file.getSize()));
             }
             return resources;
-        } catch (ResourceAlreadyExistException | ResourceServiceException e) {
+        } catch (ResourceAlreadyExistException | ResourceServiceException | ResourceNotFoundException e) {
             throw e;
         } catch (Exception e) {
             throw new ResourceServiceException("Непредвиденная ошибка при загрузки файлов", e);
         }
+    }
+
+    private ObjectWriteResponse uploadFile(String fullPath, MultipartFile file) {
+        if (s3Service.checkExistObject(fullPath)) {
+            throw new ResourceAlreadyExistException("Файл уже существует");
+        }
+        createParentDirectories(fullPath);
+        return s3Service.putObject(fullPath, file);
     }
 
 
@@ -180,7 +186,7 @@ public class ResourceServiceImpl implements ResourceService {
             throw new ResourceNotFoundException("Ресурс не найден");
         }
         if (s3Service.checkExistObject(pathTo)) {
-            throw new ResourceNotFoundException("Ресурс, лежащий по пути %s уже существует".formatted(pathTo));
+            throw new ResourceAlreadyExistException("Ресурс, лежащий по пути %s уже существует".formatted(pathTo));
         }
         if (ResourcePathUtil.isDirectory(pathTo)) {
             return moveDirectory(pathFrom, pathTo);
@@ -206,7 +212,7 @@ public class ResourceServiceImpl implements ResourceService {
     private ResourceResponse moveFile(String pathFrom, String pathTo) {
         try {
             StatObjectResponse info = s3Service.getObjectInfo(pathFrom);
-            minioS3ServiceImpl.copyObject(pathFrom, pathTo);
+            s3Service.copyObject(pathFrom, pathTo);
             s3Service.deleteObjects(List.of(new DeleteObject(pathFrom)));
             return resourceMapper.toDto(pathTo, info.size());
         } catch (Exception e) {
@@ -218,7 +224,7 @@ public class ResourceServiceImpl implements ResourceService {
     public List<ResourceResponse> searchResources(Long userId, String query) {
         try {
             String basePath = ResourcePathUtil.buildBasePath(userId);
-            List<Item> items = minioS3ServiceImpl.getObjectsInDirectory(basePath, true);
+            List<Item> items = s3Service.getObjectsInDirectory(basePath, true);
             return items.stream()
                     .filter(item -> {
                         String itemName = ResourcePathUtil.extractResourceName(item.objectName());
