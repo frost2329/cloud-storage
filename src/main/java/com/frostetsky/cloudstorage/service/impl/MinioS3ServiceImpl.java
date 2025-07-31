@@ -144,11 +144,11 @@ public class MinioS3ServiceImpl implements S3Service {
                 log.info("Проверка завершена, файл не найден: path={}", path);
                 return false;
             }
-            log.error("Ошибка при удалении проверки наличия объекта в хранилище", e);
+            log.error("Ошибка при проверке наличия объекта в хранилище", e);
             throw new MinioServiceException("Ошибка при удалении проверки наличия объекта в хранилище", e);
         } catch (Exception e) {
-            log.error("Ошибка при удалении проверки наличия объекта в хранилище: path={}", path, e);
-            throw new MinioServiceException("Ошибка при удалении проверки наличия объекта в хранилище", e);
+            log.error("Ошибка при проверке наличия объекта в хранилище: path={}", path, e);
+            throw new MinioServiceException("Ошибка при проверке наличия объекта в хранилище", e);
         }
     }
 
