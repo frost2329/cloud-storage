@@ -4,13 +4,16 @@ import com.frostetsky.cloudstorage.dto.DownloadResultDto;
 import com.frostetsky.cloudstorage.dto.ResourceResponse;
 import com.frostetsky.cloudstorage.model.CustomUserDetails;
 import com.frostetsky.cloudstorage.service.ResourceService;
-import com.frostetsky.cloudstorage.service.ValidationService;
+import com.frostetsky.cloudstorage.validation.File;
+import com.frostetsky.cloudstorage.validation.Path;
+import com.frostetsky.cloudstorage.validation.Query;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -20,14 +23,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/resource")
 @RequiredArgsConstructor
+@Validated
 public class ResourceController {
 
     private final ResourceService resourceService;
-    private final ValidationService validationService;
 
     @GetMapping()
-    public ResponseEntity<ResourceResponse> getResourceInfo(@RequestParam String path) {
-        validationService.validatePath(path);
+    public ResponseEntity<ResourceResponse> getResourceInfo(@RequestParam @Path String path) {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
                 .getAuthentication().getPrincipal();
         ResourceResponse resource = resourceService.getResourceInfo(userDetails.getUser().getId(), path);
@@ -35,9 +37,8 @@ public class ResourceController {
     }
 
     @PostMapping()
-    public ResponseEntity<List<ResourceResponse>> uploadResource(@RequestParam String path,
-                                                                 @RequestParam("object") MultipartFile[] files) {
-        validationService.validateFiles(files);
+    public ResponseEntity<List<ResourceResponse>> uploadResource(@RequestParam @Path String path,
+                                                                 @RequestParam("object") @File MultipartFile[] files) {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
                 .getAuthentication().getPrincipal();
         List<ResourceResponse> resources = resourceService.uploadResource(userDetails.getUser().getId(), path, files);
@@ -45,8 +46,7 @@ public class ResourceController {
     }
 
     @DeleteMapping()
-    public ResponseEntity<Void> deleteResource(@RequestParam String path) {
-        validationService.validatePath(path);
+    public ResponseEntity<Void> deleteResource(@RequestParam @Path String path) {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
                 .getAuthentication().getPrincipal();
         resourceService.deleteResource(userDetails.getUser().getId(), path);
@@ -54,8 +54,7 @@ public class ResourceController {
     }
 
     @GetMapping("/download")
-    public ResponseEntity<StreamingResponseBody> downloadResource(@RequestParam String path) {
-        validationService.validatePath(path);
+    public ResponseEntity<StreamingResponseBody> downloadResource(@RequestParam @Path String path) {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
                 .getAuthentication().getPrincipal();
         DownloadResultDto result = resourceService.downloadResource(userDetails.getUser().getId(), path);
@@ -66,10 +65,8 @@ public class ResourceController {
     }
 
     @GetMapping("/move")
-    public ResponseEntity<ResourceResponse> downloadResource(@RequestParam("from") String pathFrom,
-                                                             @RequestParam("to") String pathTo) {
-        validationService.validatePath(pathFrom);
-        validationService.validatePath(pathTo);
+    public ResponseEntity<ResourceResponse> downloadResource(@RequestParam("from") @Path String pathFrom,
+                                                             @RequestParam("to") @Path String pathTo) {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
                 .getAuthentication().getPrincipal();
         ResourceResponse result = resourceService.moveResource(userDetails.getUser().getId(), pathFrom, pathTo);
@@ -77,8 +74,7 @@ public class ResourceController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<ResourceResponse>> searchResource(@RequestParam("query") String query){
-        validationService.validateSearchQuery(query);
+    public ResponseEntity<List<ResourceResponse>> searchResource(@RequestParam("query") @Query String query){
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
                 .getAuthentication().getPrincipal();
         List<ResourceResponse> resources = resourceService.searchResources(userDetails.getUser().getId(), query);

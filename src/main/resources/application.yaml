@@ -9,6 +9,17 @@ spring:
     enabled: true
   session:
     timeout: 24h
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+      enabled: true
+      file-size-threshold: 2MB
+
+server:
+  tomcat:
+    max-swallow-size: 20MB
+    connection-timeout: 600000
 
 minio:
   url: ${MINIO_URL}

@@ -1,4 +1,4 @@
-package com.frostetsky.cloudstorage.service.props;
+package com.frostetsky.cloudstorage.constants;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

@@ -1,6 +1,6 @@
 package com.frostetsky.cloudstorage.config;
 
-import com.frostetsky.cloudstorage.service.props.MinioProperties;
+import com.frostetsky.cloudstorage.constants.MinioProperties;
 import io.minio.MinioClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
