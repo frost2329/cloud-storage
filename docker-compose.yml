@@ -7,6 +7,24 @@ volumes:
     driver: local
 
 services:
+  app:
+    build: .
+    image: app
+    env_file: .env
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_URL=jdbc:postgresql://db:5432/${DB_NAME}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - MINIO_URL=${MINIO_URL}
+      - REDIS_HOST=redis
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+      - minio
+      - redis
+
   frontend:
     image: frontend-image
     ports:
@@ -36,6 +54,8 @@ services:
       - minio-data:/minio
   redis:
     image: redis:alpine
+    container_name: redis
+    hostname: redis
     ports:
       - "6379:6379"
     volumes:
