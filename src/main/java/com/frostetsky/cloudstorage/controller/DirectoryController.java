@@ -4,6 +4,7 @@ import com.frostetsky.cloudstorage.dto.ResourceResponse;
 import com.frostetsky.cloudstorage.model.CustomUserDetails;
 import com.frostetsky.cloudstorage.service.DirectoryService;
 import com.frostetsky.cloudstorage.validation.Path;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +31,10 @@ public class DirectoryController {
     }
 
     @PostMapping()
-    public ResponseEntity<ResourceResponse> createDirectory(@RequestParam @Path String path) {
+    public ResponseEntity<ResourceResponse> createDirectory(@RequestParam
+                                                            @Path
+                                                            @NotBlank(message = "Путь не может быть пустым")
+                                                            String path) {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
                 .getAuthentication().getPrincipal();
         ResourceResponse directory = directoryService.createDirectory(userDetails.getUser().getId(), path);

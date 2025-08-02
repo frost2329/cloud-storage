@@ -59,6 +59,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         try {
             log.info("Загрузка пользователя: username={}", username);
@@ -68,9 +69,11 @@ public class UserServiceImpl implements UserService {
                         return new UsernameNotFoundException("Пользователь не найден");
                     });
             return new CustomUserDetails(user);
+        } catch (UsernameNotFoundException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Ошибка при загрузки пользователя: username={}", username);
-            throw new UserServiceException("шибка при загрузки пользователя", e);
+            throw new UserServiceException("Ошибка при загрузки пользователя", e);
         }
 
     }

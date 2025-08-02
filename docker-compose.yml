@@ -7,11 +7,12 @@ volumes:
     driver: local
 
 services:
-  app:
+  backend:
     build: .
-    image: app
+    image: backend
     env_file: .env
     environment:
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
       - SPRING_PROFILES_ACTIVE=prod
       - DB_URL=jdbc:postgresql://db:5432/${DB_NAME}
       - DB_USERNAME=${DB_USERNAME}
@@ -20,13 +21,14 @@ services:
       - REDIS_HOST=redis
     ports:
       - "8080:8080"
+      - "5005:5005" # debug
     depends_on:
       - db
       - minio
       - redis
 
   frontend:
-    image: frontend-image
+    image: frontend
     ports:
       - "3000:80"
   db:

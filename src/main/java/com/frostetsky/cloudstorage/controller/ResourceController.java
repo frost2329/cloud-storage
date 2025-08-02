@@ -7,6 +7,7 @@ import com.frostetsky.cloudstorage.service.ResourceService;
 import com.frostetsky.cloudstorage.validation.File;
 import com.frostetsky.cloudstorage.validation.Path;
 import com.frostetsky.cloudstorage.validation.Query;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -46,7 +47,10 @@ public class ResourceController {
     }
 
     @DeleteMapping()
-    public ResponseEntity<Void> deleteResource(@RequestParam @Path String path) {
+    public ResponseEntity<Void> deleteResource(@RequestParam
+                                               @Path
+                                               @NotBlank(message = "Путь From не может быть пустым")
+                                               String path) {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
                 .getAuthentication().getPrincipal();
         resourceService.deleteResource(userDetails.getUser().getId(), path);
@@ -54,7 +58,10 @@ public class ResourceController {
     }
 
     @GetMapping("/download")
-    public ResponseEntity<StreamingResponseBody> downloadResource(@RequestParam @Path String path) {
+    public ResponseEntity<StreamingResponseBody> downloadResource(@RequestParam
+                                                                  @Path
+                                                                  @NotBlank(message = "Путь не может быть пустым")
+                                                                  String path) {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
                 .getAuthentication().getPrincipal();
         DownloadResultDto result = resourceService.downloadResource(userDetails.getUser().getId(), path);
@@ -65,8 +72,14 @@ public class ResourceController {
     }
 
     @GetMapping("/move")
-    public ResponseEntity<ResourceResponse> downloadResource(@RequestParam("from") @Path String pathFrom,
-                                                             @RequestParam("to") @Path String pathTo) {
+    public ResponseEntity<ResourceResponse> downloadResource(@RequestParam("from")
+                                                             @Path
+                                                             @NotBlank(message = "Путь From не может быть пустым")
+                                                             String pathFrom,
+                                                             @RequestParam("to")
+                                                             @Path
+                                                             @NotBlank(message = "Путь To не может быть пустым")
+                                                             String pathTo) {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
                 .getAuthentication().getPrincipal();
         ResourceResponse result = resourceService.moveResource(userDetails.getUser().getId(), pathFrom, pathTo);

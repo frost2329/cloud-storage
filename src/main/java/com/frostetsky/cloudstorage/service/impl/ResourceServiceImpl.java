@@ -83,15 +83,23 @@ public class ResourceServiceImpl implements ResourceService {
             throw new ResourceNotFoundException("Ресурс не найден");
         }
         try {
-            List<DeleteObject> objectsToDelete = s3Service.getObjectsInDirectory(fullPath, true)
-                    .stream()
-                    .map(item -> new DeleteObject(item.objectName()))
-                    .toList();
-            if (!objectsToDelete.isEmpty()) {
-                s3Service.deleteObjects(objectsToDelete);
+            if (ResourcePathUtil.isDirectory(fullPath)) {
+                deleteDirectory(fullPath);
+            } else {
+                s3Service.deleteObjects(List.of(new DeleteObject(fullPath)));
             }
         } catch (Exception e) {
-            throw new ResourceServiceException("Непредвиденная ошибка при удалении файла", e);
+            throw new ResourceServiceException("Непредвиденная ошибка при удалении ресурса", e);
+        }
+    }
+
+    private void deleteDirectory(String path) {
+        List<DeleteObject> objectsToDelete = s3Service.getObjectsInDirectory(path, true)
+                .stream()
+                .map(item -> new DeleteObject(item.objectName()))
+                .toList();
+        if (!objectsToDelete.isEmpty()) {
+            s3Service.deleteObjects(objectsToDelete);
         }
     }
 
