@@ -56,7 +56,7 @@ public class MinioS3ServiceImpl implements S3Service {
         log.info("Получение объектов в директории: path={}, recursive={}", path, recursive);
         try {
             List<Item> resultItems = new ArrayList<>();
-            Iterable<Result<Item>> results =  minioClient.listObjects(
+            Iterable<Result<Item>> results = minioClient.listObjects(
                     ListObjectsArgs.builder()
                             .bucket(BUCKET_NAME)
                             .prefix(path)

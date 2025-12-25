@@ -17,7 +17,7 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<CurrentUserResponse> getCurrentUser() {
-        Authentication authentication= SecurityContextHolder.getContext().getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return ResponseEntity.status(HttpStatus.OK).body(new CurrentUserResponse(authentication.getName()));
     }
 }

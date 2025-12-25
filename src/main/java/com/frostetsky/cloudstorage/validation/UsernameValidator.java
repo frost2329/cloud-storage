@@ -13,7 +13,7 @@ public class UsernameValidator implements ConstraintValidator<Username, String> 
 
     @Override
     public boolean isValid(String username, ConstraintValidatorContext context) {
-        if (username.isBlank())  {
+        if (username.isBlank()) {
             buildViolation(context, "Имя пользователя не может быть пустым");
             return false;
         }

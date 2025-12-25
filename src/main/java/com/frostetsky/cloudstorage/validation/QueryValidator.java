@@ -12,7 +12,7 @@ public class QueryValidator implements ConstraintValidator<Query, String> {
 
     @Override
     public boolean isValid(String query, ConstraintValidatorContext context) {
-        if (query.isBlank())  {
+        if (query.isBlank()) {
             buildViolation(context, "Поисковый запрос не передан");
             return false;
         }

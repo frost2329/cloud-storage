@@ -87,7 +87,7 @@ public class ResourceController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<ResourceResponse>> searchResource(@RequestParam("query") @Query String query){
+    public ResponseEntity<List<ResourceResponse>> searchResource(@RequestParam("query") @Query String query) {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
                 .getAuthentication().getPrincipal();
         List<ResourceResponse> resources = resourceService.searchResources(userDetails.getUser().getId(), query);

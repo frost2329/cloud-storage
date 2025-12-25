@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface DirectoryService {
 
-    List<ResourceResponse> getDirectoryFiles(Long userId , String path);
+    List<ResourceResponse> getDirectoryFiles(Long userId, String path);
 
     void createBaseDirectory(String username);
 

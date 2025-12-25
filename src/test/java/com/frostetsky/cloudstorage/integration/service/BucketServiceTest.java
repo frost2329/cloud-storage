@@ -39,13 +39,13 @@ public class BucketServiceTest {
 
     @Test
     void createBucketTest() throws Exception {
-        if(s3Service.checkBaseBucketExists())   {
+        if (s3Service.checkBaseBucketExists()) {
             minioClient.removeBucket(RemoveBucketArgs.builder().bucket(BUCKET_NAME).build());
         }
         // Запуск когда бакета нет
-        assertDoesNotThrow(() ->bucketService.createBaseBucket());
+        assertDoesNotThrow(() -> bucketService.createBaseBucket());
         assertTrue(minioClient.bucketExists(BucketExistsArgs.builder().bucket(BUCKET_NAME).build()));
         // Запуск когда бакет есть
-        assertDoesNotThrow(() ->bucketService.createBaseBucket());
+        assertDoesNotThrow(() -> bucketService.createBaseBucket());
     }
 }

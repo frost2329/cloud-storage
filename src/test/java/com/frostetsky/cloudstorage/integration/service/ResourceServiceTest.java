@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.multipart.MultipartFile;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
 import java.util.List;
 
 import static com.frostetsky.cloudstorage.integration.util.FileUtil.createTestFile;
@@ -63,14 +64,14 @@ public class ResourceServiceTest {
         List<Item> objects = s3Service.getObjectsInDirectory(ResourcePathUtil.buildBasePath(TEST_USER_ID), true);
         assertTrue(objects.stream()
                 .anyMatch(
-                item -> item.objectName().equals(BASE_PATCH + response.path() + response.name())));
+                        item -> item.objectName().equals(BASE_PATCH + response.path() + response.name())));
 
         // Загрузка файлов в несуществующую директорию
         MultipartFile[] files = {
                 createTestFile("dir1/test.txt", "Hello Test"),
                 createTestFile("dir1/test2.txt", "Hello Test 2"),
         };
-        assertThrows(ResourceNotFoundException.class,() ->
+        assertThrows(ResourceNotFoundException.class, () ->
                 resourceService.uploadResource(TEST_USER_ID, "dir0/", files));
 
         // Загрузка файлов с одинаковым именем
@@ -78,7 +79,7 @@ public class ResourceServiceTest {
                 createTestFile("dir1/file.txt", "Hello Test"),
                 createTestFile("dir1/file.txt", "Hello Test 2"),
         };
-        assertThrows(ResourceAlreadyExistException.class,() ->
+        assertThrows(ResourceAlreadyExistException.class, () ->
                 resourceService.uploadResource(TEST_USER_ID, "", doubleFiles));
     }
 
@@ -104,7 +105,7 @@ public class ResourceServiceTest {
         assertEquals(0, foundFiles.size());
 
         // Не существующий файл
-        assertThrows(ResourceNotFoundException.class,() ->
+        assertThrows(ResourceNotFoundException.class, () ->
                 resourceService.deleteResource(TEST_USER_ID, "dir1/dir2/test.txt"));
     }
 

@@ -71,20 +71,21 @@ public class DirectoryServiceTest {
         assertEquals(2, dirFiles.size());
 
         // Получение файлов из несуществующей папки
-        assertThrows(ResourceNotFoundException.class,() ->
+        assertThrows(ResourceNotFoundException.class, () ->
                 directoryService.getDirectoryFiles(TEST_USER_ID, "dir10/"));
     }
+
     @Test
     void createDirectory_Test() {
         ResourceResponse directory = directoryService.createDirectory(TEST_USER_ID, "dir/");
         assertEquals("dir/", directory.name());
 
         // Создание уже существующей папки
-        assertThrows(ResourceAlreadyExistException.class,() ->
+        assertThrows(ResourceAlreadyExistException.class, () ->
                 directoryService.createDirectory(TEST_USER_ID, "dir/"));
 
         // Создание папки в несуществующей папке
-        assertThrows(ResourceNotFoundException.class,() ->
+        assertThrows(ResourceNotFoundException.class, () ->
                 directoryService.createDirectory(TEST_USER_ID, "dir0/dir1/dir2"));
     }
 
@@ -96,7 +97,6 @@ public class DirectoryServiceTest {
         directoryService.createBaseDirectory(userDto.username());
         s3Service.checkExistObject("user-1-files/");
     }
-
 
 
     @AfterEach

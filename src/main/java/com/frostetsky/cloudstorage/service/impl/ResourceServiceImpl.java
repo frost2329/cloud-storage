@@ -211,7 +211,7 @@ public class ResourceServiceImpl implements ResourceService {
                 String objectPathTo = pathTo + objectPathFrom.substring(pathFrom.length());
                 moveFile(objectPathFrom, objectPathTo);
             }
-            return resourceMapper.toDto(pathTo,null);
+            return resourceMapper.toDto(pathTo, null);
         } catch (Exception e) {
             throw new ResourceServiceException("Непредвиденная ошибка при перемещении папки", e);
         }

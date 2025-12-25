@@ -12,7 +12,7 @@ public class PasswordValidator implements ConstraintValidator<Password, String> 
 
     @Override
     public boolean isValid(String password, ConstraintValidatorContext context) {
-        if (password.isBlank())  {
+        if (password.isBlank()) {
             buildViolation(context, "Пароль не может быть пустым");
             return false;
         }

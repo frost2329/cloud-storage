@@ -68,7 +68,7 @@ public class UserServiceTest {
     void createUser_TestWithAnotherError() {
         CreateUserRequest userDto = new CreateUserRequest(
                 "test_user_test_user_test_user_test_user_test_user_test_user_test_user_test_user_" +
-                "test_user_test_user_test_user_test_user_test_user_test_user_test_user_test_user_test_user_",
+                        "test_user_test_user_test_user_test_user_test_user_test_user_test_user_test_user_test_user_",
                 "password");
         assertThrows(UserAlreadyExistException.class, () -> userService.createUser(userDto));
     }

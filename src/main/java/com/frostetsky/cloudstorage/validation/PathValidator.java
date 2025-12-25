@@ -13,7 +13,7 @@ public class PathValidator implements ConstraintValidator<Path, String> {
 
     @Override
     public boolean isValid(String path, ConstraintValidatorContext context) {
-        if (path == null)  {
+        if (path == null) {
             buildViolation(context, "Путь не передан");
             return false;
         }

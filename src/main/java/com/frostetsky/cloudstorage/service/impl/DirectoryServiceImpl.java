@@ -26,7 +26,7 @@ public class DirectoryServiceImpl implements DirectoryService {
 
     @Override
     public List<ResourceResponse> getDirectoryFiles(Long userId, String path) {
-        String fullPath = ResourcePathUtil.buildBasePath(userId)  + path;
+        String fullPath = ResourcePathUtil.buildBasePath(userId) + path;
         if (!s3Service.checkExistObject(fullPath)) {
             throw new ResourceNotFoundException("Папка не существует");
         }
@@ -40,10 +40,11 @@ public class DirectoryServiceImpl implements DirectoryService {
             throw new DirectoryServiceException("Произошла ошибка при получении содержимого папки", e);
         }
     }
+
     @Override
     public ResourceResponse createDirectory(Long userId, String path) {
         String basePath = ResourcePathUtil.buildBasePath(userId);
-        String fullPath = basePath  + path;
+        String fullPath = basePath + path;
         if (!s3Service.checkExistObject(basePath + ResourcePathUtil.extractParentDirectoryPath(fullPath))) {
             throw new ResourceNotFoundException("Родительская папка не существует");
         }
@@ -61,7 +62,7 @@ public class DirectoryServiceImpl implements DirectoryService {
     public void createBaseDirectory(String username) {
         String basePath = ResourcePathUtil.buildBasePath(userService.getUserIdByUsername(username));
         try {
-            if(!s3Service.checkExistObject(basePath)) {
+            if (!s3Service.checkExistObject(basePath)) {
                 s3Service.createEmptyDir(basePath);
             }
         } catch (Exception e) {
