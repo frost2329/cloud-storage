@@ -31,6 +31,19 @@ server:
     max-swallow-size: 20MB
     connection-timeout: 600000
 
+app:
+  cors:
+    allowed-origins:
+        - "http://158.255.1.254:3000"
+        - "http://158.255.1.254:80"
+        - "http://158.255.1.254"
+        - "http://frontend:3000"
+        - "http://frontend:80"
+        - "http://frontend"
+        - "http://localhost:3000"
+        - "http://localhost:80"
+        - "http://localhost"
+
 minio:
   url: ${MINIO_URL}
   accessKey: ${MINIO_ACCESS_KEY}

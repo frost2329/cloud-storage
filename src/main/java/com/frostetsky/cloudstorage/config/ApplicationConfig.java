@@ -2,17 +2,16 @@ package com.frostetsky.cloudstorage.config;
 
 import com.frostetsky.cloudstorage.constants.MinioProperties;
 import io.minio.MinioClient;
-import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@RequiredArgsConstructor
+@EnableConfigurationProperties(MinioProperties.class)
 public class ApplicationConfig {
-    private final MinioProperties minioProperties;
 
     @Bean
-    public MinioClient minioClient() {
+    public MinioClient minioClient(MinioProperties minioProperties) {
         return MinioClient.builder()
                 .endpoint(minioProperties.getUrl())
                 .credentials(minioProperties.getAccessKey(), minioProperties.getSecretKey())
