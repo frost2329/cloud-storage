@@ -13,7 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,18 +30,16 @@ public class ResourceController {
     private final ResourceService resourceService;
 
     @GetMapping()
-    public ResponseEntity<ResourceResponse> getResourceInfo(@RequestParam @Path String path) {
-        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal();
+    public ResponseEntity<ResourceResponse> getResourceInfo(@RequestParam @Path String path,
+                                                            @AuthenticationPrincipal CustomUserDetails userDetails) {
         ResourceResponse resource = resourceService.getResourceInfo(userDetails.getUser().getId(), path);
         return ResponseEntity.status(HttpStatus.OK).body(resource);
     }
 
     @PostMapping()
     public ResponseEntity<List<ResourceResponse>> uploadResource(@RequestParam @Path String path,
-                                                                 @RequestParam("object") @File MultipartFile[] files) {
-        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal();
+                                                                 @RequestParam("object") @File MultipartFile[] files,
+                                                                 @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<ResourceResponse> resources = resourceService.uploadResource(userDetails.getUser().getId(), path, files);
         return ResponseEntity.status(HttpStatus.CREATED).body(resources);
     }
@@ -50,9 +48,8 @@ public class ResourceController {
     public ResponseEntity<Void> deleteResource(@RequestParam
                                                @Path
                                                @NotBlank(message = "Путь From не может быть пустым")
-                                               String path) {
-        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal();
+                                               String path,
+                                               @AuthenticationPrincipal CustomUserDetails userDetails) {
         resourceService.deleteResource(userDetails.getUser().getId(), path);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
@@ -61,9 +58,8 @@ public class ResourceController {
     public ResponseEntity<StreamingResponseBody> downloadResource(@RequestParam
                                                                   @Path
                                                                   @NotBlank(message = "Путь не может быть пустым")
-                                                                  String path) {
-        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal();
+                                                                  String path,
+                                                                  @AuthenticationPrincipal CustomUserDetails userDetails) {
         DownloadResultDto result = resourceService.downloadResource(userDetails.getUser().getId(), path);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + result.fileName() + "\"")
@@ -79,17 +75,15 @@ public class ResourceController {
                                                              @RequestParam("to")
                                                              @Path
                                                              @NotBlank(message = "Путь To не может быть пустым")
-                                                             String pathTo) {
-        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal();
+                                                             String pathTo,
+                                                             @AuthenticationPrincipal CustomUserDetails userDetails) {
         ResourceResponse result = resourceService.moveResource(userDetails.getUser().getId(), pathFrom, pathTo);
         return ResponseEntity.ok().body(result);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<ResourceResponse>> searchResource(@RequestParam("query") @Query String query) {
-        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal();
+    public ResponseEntity<List<ResourceResponse>> searchResource(@RequestParam("query") @Query String query,
+                                                                 @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<ResourceResponse> resources = resourceService.searchResources(userDetails.getUser().getId(), query);
         return ResponseEntity.ok().body(resources);
     }

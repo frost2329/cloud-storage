@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,9 +23,8 @@ public class DirectoryController {
     private final DirectoryService directoryService;
 
     @GetMapping()
-    public ResponseEntity<List<ResourceResponse>> getDirectoryContent(@RequestParam @Path String path) {
-        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal();
+    public ResponseEntity<List<ResourceResponse>> getDirectoryContent(@RequestParam @Path String path,
+                                                                      @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<ResourceResponse> files = directoryService.getDirectoryFiles(userDetails.getUser().getId(), path);
         return ResponseEntity.status(HttpStatus.OK).body(files);
     }
@@ -34,9 +33,8 @@ public class DirectoryController {
     public ResponseEntity<ResourceResponse> createDirectory(@RequestParam
                                                             @Path
                                                             @NotBlank(message = "Путь не может быть пустым")
-                                                            String path) {
-        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal();
+                                                            String path,
+                                                            @AuthenticationPrincipal CustomUserDetails userDetails) {
         ResourceResponse directory = directoryService.createDirectory(userDetails.getUser().getId(), path);
         return ResponseEntity.status(HttpStatus.OK).body(directory);
     }
