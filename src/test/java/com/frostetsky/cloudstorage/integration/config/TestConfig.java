@@ -14,7 +14,7 @@ public class TestConfig {
     @Bean
     @ServiceConnection
     public PostgreSQLContainer<?> postgreSQLContainer() {
-        return new PostgreSQLContainer<>("postgres:15");
+        return new PostgreSQLContainer<>("postgres:17");
     }
 
     @Bean

@@ -27,35 +27,37 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public Long getUserIdByUsername(String username) {
         try {
-            log.info("Получение ID пользователя: username={}", username);
+            log.debug("Fetching user id by username: username={}", username);
             return userRepository.getUserByUsername(username)
-                    .orElseThrow(() -> {
-                        log.error("Пользователь не найден: username={}", username);
-                        return new UsernameNotFoundException("Пользователь с username %s не найден".formatted(username));
-                    })
+                    .orElseThrow(() -> new UsernameNotFoundException(
+                            "User with username %s was not found".formatted(username)
+                    ))
                     .getId();
+        } catch (UsernameNotFoundException e) {
+            log.debug("User not found while fetching id: username={}", username);
+            throw e;
         } catch (Exception e) {
-            log.error("Ошибка при получении пользователя: username={}", username);
-            throw new UserServiceException("Ошибка при загрузки пользователя", e);
+            log.error("Failed to fetch user id by username: username={}", username, e);
+            throw new UserServiceException("Failed to load user", e);
         }
     }
 
     @Transactional
     public CreateUserResponse createUser(CreateUserRequest dto) {
-        log.info("Создание нового пользователя: username={}", dto.username());
+        log.info("Creating new user: username={}", dto.username());
         try {
             User user = userRepository.save(User.builder()
                     .username(dto.username())
                     .password(passwordEncoder.encode(dto.password()))
                     .build());
-            log.info("Пользователь успешно создан: username={}", dto.username());
+            log.info("User created successfully: username={}", dto.username());
             return new CreateUserResponse(user.getUsername());
         } catch (DataIntegrityViolationException e) {
-            log.error("Ошибка при создании пользователя, имя пользователя занято: username={}", dto.username());
+            log.warn("User creation failed: username already exists: username={}", dto.username());
             throw new UserAlreadyExistException(e);
         } catch (Exception e) {
-            log.error("Ошибка при создании пользователя: username={}", dto.username());
-            throw new UserServiceException("Ошибка при создании пользователя", e);
+            log.error("Failed to create user: username={}", dto.username(), e);
+            throw new UserServiceException("Failed to create user", e);
         }
     }
 
@@ -63,18 +65,16 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         try {
-            log.info("Загрузка пользователя: username={}", username);
+            log.debug("Loading user details by username: username={}", username);
             User user = userRepository.getUserByUsername(username)
-                    .orElseThrow(() -> {
-                        log.error("Пользователь  не найден: username={}", username);
-                        return new UsernameNotFoundException("Пользователь не найден");
-                    });
+                    .orElseThrow(() -> new UsernameNotFoundException("User was not found"));
             return new CustomUserDetails(user);
         } catch (UsernameNotFoundException e) {
+            log.debug("User not found while loading user details: username={}", username);
             throw e;
         } catch (Exception e) {
-            log.error("Ошибка при загрузки пользователя: username={}", username);
-            throw new UserServiceException("Ошибка при загрузки пользователя", e);
+            log.error("Failed to load user details by username: username={}", username, e);
+            throw new UserServiceException("Failed to load user", e);
         }
 
     }

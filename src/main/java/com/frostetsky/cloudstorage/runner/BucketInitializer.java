@@ -15,7 +15,8 @@ public class BucketInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        log.info("Инициализация базового бакета");
+        log.info("Initializing base bucket");
         bucketService.createBaseBucket();
+        log.info("Base bucket initialization completed");
     }
 }
