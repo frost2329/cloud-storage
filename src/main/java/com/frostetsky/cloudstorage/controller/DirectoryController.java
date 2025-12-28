@@ -36,6 +36,6 @@ public class DirectoryController {
                                                             String path,
                                                             @AuthenticationPrincipal CustomUserDetails userDetails) {
         ResourceResponse directory = directoryService.createDirectory(userDetails.getUser().getId(), path);
-        return ResponseEntity.status(HttpStatus.OK).body(directory);
+        return ResponseEntity.status(HttpStatus.CREATED).body(directory);
     }
 }

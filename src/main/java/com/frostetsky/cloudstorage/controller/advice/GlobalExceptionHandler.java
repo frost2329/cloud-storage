@@ -10,24 +10,26 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 
 @Slf4j
-@ControllerAdvice
-public class ExceptionHandlerController {
+@RestControllerAdvice
+public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserAlreadyExistException.class)
     public ResponseEntity<ErrorResponse> handleCreateUserException(UserAlreadyExistException e) {
         log.warn("User creation failed: username already exists: message={}", e.getMessage());
-        return ResponseEntity.status(e.getStatusCode()).body(new ErrorResponse(e.getMessage()));
+        return ResponseEntity.status(e.getStatusCode()).body(
+                new ErrorResponse(e.getMessage()));
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleCreateUserException(BadCredentialsException e) {
         log.warn("Authentication failed: bad credentials");
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponse("Неверный логин или пароль"));
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                new ErrorResponse("Authentication failed: bad credentials"));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -49,33 +51,33 @@ public class ExceptionHandlerController {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(ResourceNotFoundException e) {
-        log.info("Request failed: resource not found: message={}", e.getMessage());
+        log.warn("Request failed: resource not found: message={}", e.getMessage());
         return ResponseEntity.status(e.getStatusCode()).body(new ErrorResponse(e.getMessage()));
     }
 
     @ExceptionHandler(ResourceAlreadyExistException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(ResourceAlreadyExistException e) {
-        log.info("Request failed: resource already exists: message={}", e.getMessage());
+        log.warn("Request failed: resource already exists: message={}", e.getMessage());
         return ResponseEntity.status(e.getStatusCode()).body(new ErrorResponse(e.getMessage()));
     }
 
-    @ExceptionHandler(DirectoryServiceException.class)
-    public ResponseEntity<ErrorResponse> handleValidationExceptions(DirectoryServiceException e) {
-        log.error("Directory service error: message={}", e.getMessage(), e);
-        return ResponseEntity.status(e.getStatusCode()).body(new ErrorResponse(e.getMessage()));
+    @ExceptionHandler(ResourceServiceException.class)
+    public ResponseEntity<ErrorResponse> handleValidationExceptions(ResourceServiceException e) {
+        log.error("Resource service error: {}", e.getMessage(), e);
+        return ResponseEntity.status(e.getStatusCode()).body(new ErrorResponse("Error operation failed"));
     }
 
-    @ExceptionHandler(BaseException.class)
-    public ResponseEntity<ErrorResponse> handleOtherException(BaseException e) {
-        log.error("Unexpected application error: type={}, message={}", e.getClass().getSimpleName(), e.getMessage(), e);
-        return ResponseEntity.status(e.getStatusCode()).body(
-                new ErrorResponse("Произошла непредвиденная ошибка: %s".formatted(e.getMessage())));
+    @ExceptionHandler(MinioServiceException.class)
+    public ResponseEntity<ErrorResponse> handleValidationExceptions(MinioServiceException e) {
+        log.error("Storage error: {}", e.getMessage(), e);
+        return ResponseEntity.status(e.getStatusCode()).body(new ErrorResponse("Storage operation failed"));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleOtherException(Exception e) {
         log.error("Unexpected server error: type={}, message={}", e.getClass().getSimpleName(), e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
-                new ErrorResponse("Произошла непредвиденная ошибка: %s".formatted(e.getMessage())));
+                new ErrorResponse("Unexpected server error"));
     }
 }
+

@@ -54,7 +54,7 @@ public class UserServiceImpl implements UserService {
             return new CreateUserResponse(user.getUsername());
         } catch (DataIntegrityViolationException e) {
             log.warn("User creation failed: username already exists: username={}", dto.username());
-            throw new UserAlreadyExistException(e);
+            throw new UserAlreadyExistException("User already exist", e);
         } catch (Exception e) {
             log.error("Failed to create user: username={}", dto.username(), e);
             throw new UserServiceException("Failed to create user", e);

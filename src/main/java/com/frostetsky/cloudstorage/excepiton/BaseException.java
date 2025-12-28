@@ -8,10 +8,6 @@ public class BaseException extends RuntimeException {
     private final int statusCode;
     private final String massage;
 
-    public BaseException(int statusCode, String message) {
-        this(statusCode, message, null);
-    }
-
     public BaseException(int statusCode, String message, Exception e) {
         super(message, e);
         this.massage = message;
