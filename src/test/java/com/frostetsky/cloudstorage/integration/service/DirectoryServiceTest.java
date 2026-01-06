@@ -39,7 +39,7 @@ public class DirectoryServiceTest {
 
     private static final Logger log = LoggerFactory.getLogger(ResourceServiceTest.class);
     private static final Long TEST_USER_ID = 10L;
-    private static final String BASE_PATCH = ResourcePathUtil.buildBasePath(TEST_USER_ID);
+    private static final String BASE_PATH = ResourcePathUtil.buildBasePath(TEST_USER_ID);
 
     @BeforeAll
     static void setup(@Autowired S3Service s3Service) {
@@ -48,7 +48,7 @@ public class DirectoryServiceTest {
             if (!s3Service.checkBaseBucketExists()) {
                 s3Service.createBaseBucket();
             }
-            s3Service.createEmptyDir(BASE_PATCH);
+            s3Service.createEmptyDir(BASE_PATH);
         } catch (Exception e) {
             throw new RuntimeException("Failed to setup bucket", e);
         }
@@ -61,7 +61,7 @@ public class DirectoryServiceTest {
 
     @Test
     void getResourceInfo_Test() {
-        s3Service.createEmptyDir(BASE_PATCH + "dir/");
+        s3Service.createEmptyDir(BASE_PATH + "dir/");
         MultipartFile[] files = {
                 createTestFile("file.txt", "Hello Test"),
                 createTestFile("file2.txt", "Hello Test")
@@ -91,7 +91,7 @@ public class DirectoryServiceTest {
 
     @Test
     void createBaseDirectory_Test() {
-        s3Service.deleteObjects(List.of(new DeleteObject(BASE_PATCH)));
+        s3Service.deleteObjects(List.of(new DeleteObject(BASE_PATH)));
         CreateUserRequest userDto = new CreateUserRequest("test_user", "password");
         userService.createUser(userDto);
         directoryService.createBaseDirectory(userDto.username());
@@ -102,9 +102,9 @@ public class DirectoryServiceTest {
     @AfterEach
     void cleanUp() {
         log.info("=========>  CLEANUP");
-        List<DeleteObject> objectsToDelete = s3Service.getObjectsInDirectory(BASE_PATCH, true)
+        List<DeleteObject> objectsToDelete = s3Service.getObjectsInDirectory(BASE_PATH, true)
                 .stream()
-                .filter(item -> !item.objectName().equals(BASE_PATCH))
+                .filter(item -> !item.objectName().equals(BASE_PATH))
                 .map(item -> new DeleteObject(item.objectName()))
                 .toList();
         if (!objectsToDelete.isEmpty()) {
